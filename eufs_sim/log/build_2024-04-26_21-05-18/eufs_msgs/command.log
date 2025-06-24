@@ -1,6 +1,0 @@
-Invoking command in '/home/xyh/eufs_sim/build/eufs_msgs': CMAKE_PREFIX_PATH=/home/xyh/sim_ws/install/f1tenth_gym_ros:/opt/ros/foxy /usr/bin/cmake /home/xyh/eufs_sim/eufs_msgs -DCMAKE_INSTALL_PREFIX=/home/xyh/eufs_sim/install/eufs_msgs
-Invoked command in '/home/xyh/eufs_sim/build/eufs_msgs' returned '0': CMAKE_PREFIX_PATH=/home/xyh/sim_ws/install/f1tenth_gym_ros:/opt/ros/foxy /usr/bin/cmake /home/xyh/eufs_sim/eufs_msgs -DCMAKE_INSTALL_PREFIX=/home/xyh/eufs_sim/install/eufs_msgs
-Invoking command in '/home/xyh/eufs_sim/build/eufs_msgs': CMAKE_PREFIX_PATH=/home/xyh/sim_ws/install/f1tenth_gym_ros:/opt/ros/foxy /usr/bin/cmake --build /home/xyh/eufs_sim/build/eufs_msgs -- -j2 -l2
-Invoked command in '/home/xyh/eufs_sim/build/eufs_msgs' returned '0': CMAKE_PREFIX_PATH=/home/xyh/sim_ws/install/f1tenth_gym_ros:/opt/ros/foxy /usr/bin/cmake --build /home/xyh/eufs_sim/build/eufs_msgs -- -j2 -l2
-Invoking command in '/home/xyh/eufs_sim/build/eufs_msgs': CMAKE_PREFIX_PATH=/home/xyh/sim_ws/install/f1tenth_gym_ros:/opt/ros/foxy /usr/bin/cmake --install /home/xyh/eufs_sim/build/eufs_msgs
-Invoked command in '/home/xyh/eufs_sim/build/eufs_msgs' returned '0': CMAKE_PREFIX_PATH=/home/xyh/sim_ws/install/f1tenth_gym_ros:/opt/ros/foxy /usr/bin/cmake --install /home/xyh/eufs_sim/build/eufs_msgs

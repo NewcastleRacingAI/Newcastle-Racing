@@ -1,2 +1,0 @@
-Invoking command in '/home/xyh/ros2_foxy_workspace/src/MPCC/C++/build/mpcc_control': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake /home/xyh/ros2_foxy_workspace/src/MPCC/C++ -DCMAKE_INSTALL_PREFIX=/home/xyh/ros2_foxy_workspace/src/MPCC/C++/install/mpcc_control
-Invoked command in '/home/xyh/ros2_foxy_workspace/src/MPCC/C++/build/mpcc_control' returned '1': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake /home/xyh/ros2_foxy_workspace/src/MPCC/C++ -DCMAKE_INSTALL_PREFIX=/home/xyh/ros2_foxy_workspace/src/MPCC/C++/install/mpcc_control

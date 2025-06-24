@@ -1,2 +1,0 @@
-Invoking command in '/home/xyh/eufs_sim/build/eufs_models': CMAKE_PREFIX_PATH=/home/xyh/sim_ws/install/f1tenth_gym_ros:/opt/ros/foxy /usr/bin/cmake /home/xyh/eufs_sim/eufs_models -DCMAKE_INSTALL_PREFIX=/home/xyh/eufs_sim/install/eufs_models
-Invoked command in '/home/xyh/eufs_sim/build/eufs_models' returned '1': CMAKE_PREFIX_PATH=/home/xyh/sim_ws/install/f1tenth_gym_ros:/opt/ros/foxy /usr/bin/cmake /home/xyh/eufs_sim/eufs_models -DCMAKE_INSTALL_PREFIX=/home/xyh/eufs_sim/install/eufs_models

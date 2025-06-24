@@ -1,3 +1,80 @@
+### Added June 2025:
+# Running Docker Containerised Code
+
+Note: the docker implementation was created on a linux ubuntu 22.04 pc. It may be able to be run on other systems but some modification may be required.
+
+The expected workflow is that all members of the team are able to build the docker container for testing modified src code and commit everything back to git. Changes to src will require rebuilding inside the container. 
+
+1. run
+```
+xhost +local:root
+docker-compose up
+```
+when finished it will say "Attaching to nufs", run in separate command line:
+```
+docker exec -it nufs bash
+```
+
+2. Inside the container run the MPCC install file:
+```
+cd src/MPCC/C++
+rm -rf External/
+./install.sh
+cd /workspace/src/ft-fsd-path-planning
+pip install --no-cache-dir -r requirements.txt
+```
+
+3. Build ROS packages
+```
+cd /workspace
+source /opt/ros/galactic/setup.bash
+pip3 install --no-cache-dir pandas matplotlib scipy
+rosdep install --from-paths src --ignore-src -r -y
+```
+ignore errors about pandas, matplolib and scipy
+```
+colcon build --symlink-install
+source /opt/ros/galactic/setup.bash
+source install/setup.bash
+```
+
+When running new nodes, open a new command shell and run the following:
+```
+docker exec -it nufs bash
+cd /workspace
+source /opt/ros/galactic/setup.bash
+source install/setup.bash
+```
+
+### Running the Simulation
+
+see section "Launching and Running Nodes" below. 
+```
+ros2 launch eufs_launcher eufs_launcher.launch.py
+./install/ft-fsd-path-planning/bin/path_planning_node
+ros2 run mpcc_control mpcc_control_node
+```
+
+### Shutting down the container
+To save container as is a new image:
+```
+docker commit nufs your_custom_name
+```
+
+To end the current container session but persist all changes to be ran again:
+```
+exit
+```
+
+And to start that version of the container again:
+```
+docker start -ai nufs
+cd /workspace
+source /opt/ros/galactic/setup.bash
+source install/setup.bash
+```
+
+# For Non-dockerised use of the code:
 
 ### Initial Setup and Environment Configuration
 
@@ -5,7 +82,7 @@
    Start by changing to your ROS2 Foxy workspace directory located in your home folder. This is where all your development and builds will take place. This workspace name can be anything, just make sure you replace it in the commands accordingly. For example if my workspace was `eufs` I would `cd /eufs`.
    ```bash
    cd ~/your_workspace
-   ```
+   ```colcon build --symlink-install --packages-select ft-fsd-path-planning
 
 2. **Edit some files in MPCC:**
    From your workspace, enter MPCC and then C++, and modify `install.sh` with `gedit`, `nano`, `vim`, or your preferred editor to add a build target for `CMake` so it won't fail on certain systems. Then, run the installer to get all the dependencies. These will automatically build within the package.
@@ -74,7 +151,7 @@
    public:
       MPCCController()
          : Node("mpcc_controller_node"),
-         last_steering_angle(0.0),
+         last_steering_angle(0.0),colcon build --symlink-install --packages-select ft-fsd-path-planning
          track(getParentPath(getCurrentWorkingDirectory())+"/install/mpcc_control/share/mpcc_control/Params/track.json"), 
          total_distance(0.0), 
          D(0.5),

@@ -1,4 +1,0 @@
-Invoking command in '/home/xyh/eufs_sim/build/eufs_sensors': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/xyh/eufs_sim/build/eufs_sensors -- -j2 -l2
-Invoked command in '/home/xyh/eufs_sim/build/eufs_sensors' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/xyh/eufs_sim/build/eufs_sensors -- -j2 -l2
-Invoking command in '/home/xyh/eufs_sim/build/eufs_sensors': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/xyh/eufs_sim/build/eufs_sensors
-Invoked command in '/home/xyh/eufs_sim/build/eufs_sensors' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/xyh/eufs_sim/build/eufs_sensors

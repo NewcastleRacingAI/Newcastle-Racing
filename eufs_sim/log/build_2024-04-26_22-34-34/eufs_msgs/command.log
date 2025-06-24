@@ -1,4 +1,0 @@
-Invoking command in '/home/xyh/eufs_sim/build/eufs_msgs': /usr/bin/cmake --build /home/xyh/eufs_sim/build/eufs_msgs -- -j2 -l2
-Invoked command in '/home/xyh/eufs_sim/build/eufs_msgs' returned '0': /usr/bin/cmake --build /home/xyh/eufs_sim/build/eufs_msgs -- -j2 -l2
-Invoking command in '/home/xyh/eufs_sim/build/eufs_msgs': /usr/bin/cmake --install /home/xyh/eufs_sim/build/eufs_msgs
-Invoked command in '/home/xyh/eufs_sim/build/eufs_msgs' returned '0': /usr/bin/cmake --install /home/xyh/eufs_sim/build/eufs_msgs
