@@ -43,7 +43,7 @@ cd External/blasfeo
 mkdir -p build
 mkdir -p lib
 cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$(realpath ../lib)
+cmake .. -DCMAKE_INSTALL_PREFIX=$(realpath ../lib) -DTARGET=X64_AUTOMATIC
 make
 make install
 
@@ -51,6 +51,6 @@ cd ../../hpipm
 mkdir -p build
 mkdir -p lib
 cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$(realpath ../lib) -DBLASFEO_PATH=$(realpath ../../blasfeo/lib)
+cmake .. -DCMAKE_INSTALL_PREFIX=$(realpath ../lib) -DBLASFEO_PATH=$(realpath ../../blasfeo/lib) -DTARGET=X64_AUTOMATIC
 make
 make install
