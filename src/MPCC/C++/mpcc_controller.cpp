@@ -59,7 +59,7 @@ private:
         path_subscriber = this->create_subscription<eufs_msgs::msg::PathWithBoundaries>(
             "/path", 1, std::bind(&MPCCController::path_callback, this, std::placeholders::_1));
         car_state_subscriber = this->create_subscription<eufs_msgs::msg::CarState>(
-            "/odometry_integration/car_state", 1, std::bind(&MPCCController::car_state_callback, this, std::placeholders::_1));
+            "/ground_truth/odom", 1, std::bind(&MPCCController::car_state_callback, this, std::placeholders::_1));
         control_publisher = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("/cmd", 10);
     }
 

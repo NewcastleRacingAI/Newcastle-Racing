@@ -4,16 +4,19 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 import os
 
+PACKAGE_NAME = "newcastle_racing_ai"
+NAMESPACE = "nrfai"
+
 def generate_launch_description():
     workspace_dir = os.getenv('WORKSPACE_DIR', '/workspace')
 
     return LaunchDescription([
         # ros2 launch eufs_launcher eufs_launcher.launch.py
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(workspace_dir, 'eufs_sim/eufs_launcher/launch/eufs_launcher.launch.py')
-            )
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(
+        #         os.path.join(workspace_dir, 'eufs_sim/eufs_launcher/launch/eufs_launcher.launch.py')
+        #     )
+        # ),
         # Path planning node (as a process)
         ExecuteProcess(
             cmd=[os.path.join(workspace_dir, 'install/ft-fsd-path-planning/bin/path_planning_node')],
@@ -29,7 +32,7 @@ def generate_launch_description():
         package=PACKAGE_NAME,
         namespace=NAMESPACE,
         executable="controller",
-        name="controller",
+        name="Controller",
         )
         # Newcastle Racing AI launch file
         # IncludeLaunchDescription(

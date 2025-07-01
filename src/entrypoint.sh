@@ -27,5 +27,5 @@ source /opt/ros/galactic/setup.bash
 source /workspace/install/setup.bash
 
 # launch the nodes
-exec ros2 launch newcastle_racing_ai all_nodes.launch.py
+exec ros2 launch eufs_launcher eufs_launcher.launch.py
 tail -f /dev/null
