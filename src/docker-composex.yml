@@ -1,0 +1,35 @@
+services:
+  newcastle_racing_ai:
+    image: newcastle-racing-ai
+    build: .
+    container_name: newcastle-racing-ai
+    volumes:
+      - ./newcastle_racing_ai:/workspace/newcastle_racing_ai
+      - ./newcastle_racing_ai_msgs:/workspace/newcastle_racing_ai_msgs
+      - ./ft-fsd-path-planning:/workspace/ft-fsd-path-planning
+      - ./MPCC:/workspace/MPCC
+      - ./ros_can:/workspace/ros_can
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=${DISPLAY} 
+    ports:
+      - "9090:9090"
+    stdin_open: true
+    tty: true
+  fsds:
+    image: fsds-ros
+    build: ./FSDS
+    container_name: fsds-ros
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - newcastle_racing_ai
+    command:
+      - "--fsds-ip"
+      - "host.docker.internal"
+      - "--ros-ip"
+      - "newcastle_racing_ai"
+      - "--timestep"
+      - "5"
+    stdin_open: true
+    tty: true

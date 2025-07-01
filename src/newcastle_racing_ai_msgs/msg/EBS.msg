@@ -1,0 +1,1 @@
+bool ebs_stop

@@ -13,12 +13,17 @@ RUN apt update && apt install -y \
     ros-galactic-rviz2 \
     ros-galactic-gazebo-ros-pkgs \
     ros-galactic-rqt \
+    ros-galactic-rqt-graph \
     ros-galactic-xacro \
     ros-galactic-ackermann-msgs \
     ros-galactic-image-geometry \
     python3-colcon-common-extensions \
     python3-pip \
     nano \
+    python3-tk \
+    python3-rosdep \
+    wget \
+    can-utils \
     python3-rosdep \
     ros-galactic-joint-state-publisher \
     ros-galactic-rosbridge-server \
@@ -27,16 +32,8 @@ RUN apt update && apt install -y \
 # Initialize rosdep (assumes root image)
 RUN rosdep init || echo "rosdep already initialized"
 RUN rosdep update
-    
-# Set working directory
-WORKDIR /workspace
 
 # Go back to workspace root
 WORKDIR /workspace
 
-# Source ROS setup and build
-RUN /bin/bash -c "source /opt/ros/galactic/setup.bash"
-
-# Default command
-CMD ["/bin/bash"]
-
+ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
