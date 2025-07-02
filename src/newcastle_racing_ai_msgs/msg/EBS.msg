@@ -1,1 +1,1 @@
-bool ebs_stop
+bool ebs

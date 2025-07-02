@@ -19,14 +19,16 @@ setup(
     zip_safe=True,
     maintainer='Ernesto Casablanca',
     maintainer_email='casablancaernesto@gmail.com',
-    description='Package developed by the Newcastle Racing AI team for the UK Formula AI compatition',
+    description='Package developed by the Newcastle Racing AI team for the UK Formula AI competition',
     license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'controller = newcastle_racing_ai.controller:main',
             'perception = newcastle_racing_ai.perception:main',
-            'planner = newcastle_racing_ai.planner:main',
+            'safety = newcastle_racing_ai.safety:main',
+            'mission_control = newcastle_racing_ai.mission_control:main',
+            'distance_tracker = newcastle_racing_ai.distance_tracker:main',
         ],
     },
 )

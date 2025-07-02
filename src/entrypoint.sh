@@ -12,8 +12,8 @@ pip install --no-cache-dir -r requirements.txt
 pip install cvxpy
 
 # install ros_can
-cd /workspace/ros_can/FS-AI-API
-./setup.sh
+# cd /workspace/ros_can/FS-AI-API
+# ./setup.sh
 
 # # Build ROS packages
 
@@ -24,7 +24,7 @@ source /opt/ros/galactic/setup.bash
 # # ignore errors about pandas, matplolib and scipy
 
 # build ros workspace
-colcon build --symlink-install
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to ros_can
 
 # Source ROS and workspace
 source /opt/ros/galactic/setup.bash

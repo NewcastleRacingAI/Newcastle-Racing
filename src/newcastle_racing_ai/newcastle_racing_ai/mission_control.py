@@ -3,6 +3,7 @@ from rclpy.node import Node
 from eufs_msgs.msg import  CanState
 from std_msgs.msd import Bool
 from newcastle_racing_ai_msgs import Mission, MissionState
+
 from .parameters import PARAMETERS
 
 class Mission_Control(Node):
@@ -31,7 +32,13 @@ class Mission_Control(Node):
             #do nothing
             pass
         self.mission = msg.ami_state
+        if msg.mission == AMI_DDT_INSPECTION_A:
+            inspection_mission_a()
         self._publisher_mission_state.publish(self.mission)
+
+    def inspection_mission_a(self):
+        self.get_logger().info('Inspection Mission A started')
+
         
     
 

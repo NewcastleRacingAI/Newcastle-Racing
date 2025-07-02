@@ -3,6 +3,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import PoseArray, Pose
 from eufs_msgs.msg import PathWithBoundaries
 #from eufs_sim.msg import CarState
+from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from ackermann_msgs.msg import AckermannDriveStamped
 from newcastle_racing_ai.utils.mpc_module import P, Node as MpcNode, PATH, calc_ref_trajectory_in_T_step, linear_mpc_control
@@ -17,7 +18,7 @@ class Controller(Node):
         # --------- ROS subscriptions and publishers ---------
         self.create_subscription(PathWithBoundaries, "/path", self.on_path, 10)
         self.create_subscription(Odometry, "/ground_truth/odom", self.on_odom, 10)
-        self.create_subscription(IMU, "/ros_can/imu", self.on_imu, 10)
+        self.create_subscription(Imu, "/ros_can/imu", self.on_imu, 10)
         self.publisher = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
 
         # --------- MPC internal buffers ---------
@@ -33,7 +34,8 @@ class Controller(Node):
 
 
     def on_imu(self, msg):
-        
+        #this may be needed for live running when can't get odom
+        pass
 
     # --------- Callback: path subscription (from planner) ---------
     def on_path(self, msg):

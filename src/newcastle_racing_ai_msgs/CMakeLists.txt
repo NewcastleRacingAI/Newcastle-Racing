@@ -21,6 +21,9 @@ set(msg_files
   msg/WheelStates.msg
   msg/PathWithBoundaries.msg
   msg/EBS.msg
+  msg/DistanceTotal.msg
+  msg/Mission.msg
+  msg/MissionState.msg
 )
 
 set(srv_files

@@ -5,7 +5,6 @@ from eufs_msgs.msg import ConeArrayWithCovariance, CarState,PathWithBoundaries
 from matplotlib import pyplot as plt
 from sensor_msgs.msg import Imu
 from fsd_path_planning import PathPlanner, MissionTypes
-from ackermann_msgs.msg import AckermannDriveStamped
 from math import atan2, radians
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Header, ColorRGBA
@@ -31,7 +30,6 @@ class PathPlanningDualCamVisualizationNode(Node):
         self.create_subscription(CarState, '/odometry_integration/car_state', self.car_state_callback, 10)
         self.create_subscription(ConeArrayWithCovariance, '/ground_truth/cones', self.cones_callback, 10)
         self.create_subscription(Imu, '/camera/imu/data', self.imu_callback, 10)
-        self.control_publisher = self.create_publisher(AckermannDriveStamped, '/cmd', 10)
         self.path_publisher = self.create_publisher(PathWithBoundaries, '/path', 10)
         self.marker_pub = self.create_publisher(Marker, '/visualization_marker', 1)
         self.create_timer(1, self.publish_path)

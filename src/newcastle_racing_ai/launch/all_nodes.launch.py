@@ -18,10 +18,10 @@ def generate_launch_description():
         #     )
         # ),
         # ros_can launcher
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(workspace_dir, 'ros_can/launch/ros_can.launch.py')
-            )
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(
+        #         os.path.join(workspace_dir, 'ros_can/launch/ros_can.launch.py')
+        #     )
         ),
         # Path planning node (as a process)
         ExecuteProcess(
@@ -45,12 +45,18 @@ def generate_launch_description():
         namespace=NAMESPACE,
         executable="safety",
         name="Safety",
-        )
+        ),
         Node(
         package=PACKAGE_NAME,
         namespace=NAMESPACE,
         executable="mission_control",
         name="Mission_Control",
+        ),
+               Node(
+        package=PACKAGE_NAME,
+        namespace=NAMESPACE,
+        executable="distance_tracker",
+        name="Distance_Tracker",
         )
         # Newcastle Racing AI launch file
         # IncludeLaunchDescription(

@@ -35,4 +35,7 @@ RUN rosdep update
 # Go back to workspace root
 WORKDIR /workspace
 
+RUN echo 'source /opt/ros/galactic/setup.bash' >> ~/.bashrc
+RUN echo 'source /workspace/install/setup.bash' >> ~/.bashrc
+
 ENTRYPOINT ["/bin/bash", "entrypoint.sh"]

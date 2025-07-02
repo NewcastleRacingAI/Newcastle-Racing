@@ -2,7 +2,7 @@ import os
 import rclpy
 from rclpy.node import Node
 from eufs_mgs.msg import StereoImage
-from sensor_msgs.msg import Image, Imu, PointCloud2
+from sensor_msgs.msg import Image, Imu,
 from geometry_msgs.msg import Point
 from newcastle_racing_ai_msgs.msg import ConeArrayWithCovariance, ConeWithCovariance
 from .parameters import PARAMETERS
@@ -13,36 +13,37 @@ class Perception(Node):
     def __init__(self):
         super().__init__("Perception")
         self._img_counter = 0
+        self._latest_image_msg = None
+        self.camera_timer_period = self.get_parameter("camera_time_step").value
         self.declare_parameters(namespace="", parameters=PARAMETERS)
         self._subscription = self.create_subscription(StereoImage, self.get_parameter("camera_topic").value, self._on_camera, 10)
         #self._subscription = self.create_subscription(Imu, self.get_parameter("imu_topic").value, self._on_imu, 10)
         #self._subscription = self.create_subscription(PointCloud2, self.get_parameter("lidar_topic").value, self._on_lidar, 10)
         self._publisher = self.create_publisher(ConeArrayWithCovariance, self.get_parameter("cones_topic").value, 10)
-        # self.timer = self.create_timer(timer_period, self._timer_callback)
+        self.timer = self.create_timer(self.camera_timer_period, self._timer_callback)
 
     def _on_camera(self, msg):
         self.get_logger().info('Received: "%s"' % type(msg))
         # Process CAMERA data here if needed. For example, saving the image in ppm format.
-        self.save_image_ppm(msg)
-
+        self._latest_image_msg = msg
+        
     def _on_imu(self, msg):
         self.get_logger().info('Received: "%s"' % type(msg))
         # Process IMU data here if needed
 
-    def _on_lidar(self, msg):
-        self.get_logger().info('Received: "%s"' % type(msg))
-        # Process LIDAR data here if needed
-
     def _timer_callback(self):
-        msg = ConeArrayWithCovariance(
-            blue_cones=[ConeWithCovariance(point=Point(x=0.0, y=0.0, z=0.0), covariance=[0.0, 0.0, 0.0, 0.0])],
-            yellow_cones=[],
-            orange_cones=[],
-            big_orange_cones=[],
-            unknown_color_cones=[ConeWithCovariance(point=Point(x=0.0, y=0.0, z=0.0), covariance=[0.0, 0.0, 0.0, 0.0])],
-        )
-        self._publisher.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg)
+        self.save_image_ppm(msg)
+        # Code here to process the latest image message and publish cones.
+
+        # msg = ConeArrayWithCovariance(
+        #     blue_cones=[ConeWithCovariance(point=Point(x=0.0, y=0.0, z=0.0), covariance=[0.0, 0.0, 0.0, 0.0])],
+        #     yellow_cones=[],
+        #     orange_cones=[],
+        #     big_orange_cones=[],
+        #     unknown_color_cones=[ConeWithCovariance(point=Point(x=0.0, y=0.0, z=0.0), covariance=[0.0, 0.0, 0.0, 0.0])],
+        # )
+        # self._publisher.publish(msg)
+        # self.get_logger().info('Publishing: "%s"' % msg)
 
     def save_image_ppm(self, msg, filename="/workspace/newcastle_racing_ai/imgs/image-{}.ppm"):
         # This function is a placeholder for saving the image in ppm format.
