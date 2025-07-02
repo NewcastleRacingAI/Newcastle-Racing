@@ -17,6 +17,12 @@ def generate_launch_description():
         #         os.path.join(workspace_dir, 'eufs_sim/eufs_launcher/launch/eufs_launcher.launch.py')
         #     )
         # ),
+        # ros_can launcher
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(workspace_dir, 'ros_can/launch/ros_can.launch.py')
+            )
+        ),
         # Path planning node (as a process)
         ExecuteProcess(
             cmd=[os.path.join(workspace_dir, 'install/ft-fsd-path-planning/bin/path_planning_node')],
@@ -33,6 +39,18 @@ def generate_launch_description():
         namespace=NAMESPACE,
         executable="controller",
         name="Controller",
+        ),
+        Node(
+        package=PACKAGE_NAME,
+        namespace=NAMESPACE,
+        executable="safety",
+        name="Safety",
+        )
+        Node(
+        package=PACKAGE_NAME,
+        namespace=NAMESPACE,
+        executable="mission_control",
+        name="Mission_Control",
         )
         # Newcastle Racing AI launch file
         # IncludeLaunchDescription(

@@ -23,7 +23,6 @@ RUN apt update && apt install -y \
     python3-tk \
     python3-rosdep \
     wget \
-    can-utils \
     python3-rosdep \
     ros-galactic-joint-state-publisher \
     ros-galactic-rosbridge-server \

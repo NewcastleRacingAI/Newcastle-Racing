@@ -11,6 +11,10 @@ cd /workspace/ft-fsd-path-planning
 pip install --no-cache-dir -r requirements.txt
 pip install cvxpy
 
+# install ros_can
+cd /workspace/ros_can/FS-AI-API
+./setup.sh
+
 # # Build ROS packages
 
 cd /workspace
@@ -25,6 +29,7 @@ colcon build --symlink-install
 # Source ROS and workspace
 source /opt/ros/galactic/setup.bash
 source /workspace/install/setup.bash
+
 
 # launch the nodes
 exec ros2 launch eufs_launcher eufs_launcher.launch.py

@@ -17,6 +17,7 @@ class Controller(Node):
         # --------- ROS subscriptions and publishers ---------
         self.create_subscription(PathWithBoundaries, "/path", self.on_path, 10)
         self.create_subscription(Odometry, "/ground_truth/odom", self.on_odom, 10)
+        self.create_subscription(IMU, "/ros_can/imu", self.on_imu, 10)
         self.publisher = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
 
         # --------- MPC internal buffers ---------
@@ -29,6 +30,10 @@ class Controller(Node):
 
         # Main control loop, 20 Hz
         self.create_timer(0.05, self.timer_callback)
+
+
+    def on_imu(self, msg):
+        
 
     # --------- Callback: path subscription (from planner) ---------
     def on_path(self, msg):

@@ -1,7 +1,7 @@
 import os
 import rclpy
 from rclpy.node import Node
-
+from eufs_mgs.msg import StereoImage
 from sensor_msgs.msg import Image, Imu, PointCloud2
 from geometry_msgs.msg import Point
 from newcastle_racing_ai_msgs.msg import ConeArrayWithCovariance, ConeWithCovariance
@@ -14,13 +14,9 @@ class Perception(Node):
         super().__init__("Perception")
         self._img_counter = 0
         self.declare_parameters(namespace="", parameters=PARAMETERS)
-        self._subscription = self.create_subscription(
-            Image, self.get_parameter("camera_topic").value, self._on_camera, 10
-        )
-        self._subscription = self.create_subscription(Imu, self.get_parameter("imu_topic").value, self._on_imu, 10)
-        self._subscription = self.create_subscription(
-            PointCloud2, self.get_parameter("lidar_topic").value, self._on_lidar, 10
-        )
+        self._subscription = self.create_subscription(StereoImage, self.get_parameter("camera_topic").value, self._on_camera, 10)
+        #self._subscription = self.create_subscription(Imu, self.get_parameter("imu_topic").value, self._on_imu, 10)
+        #self._subscription = self.create_subscription(PointCloud2, self.get_parameter("lidar_topic").value, self._on_lidar, 10)
         self._publisher = self.create_publisher(ConeArrayWithCovariance, self.get_parameter("cones_topic").value, 10)
         # self.timer = self.create_timer(timer_period, self._timer_callback)
 
