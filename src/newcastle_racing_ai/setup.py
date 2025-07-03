@@ -28,7 +28,7 @@ setup(
             'perception = newcastle_racing_ai.perception:main',
             'safety = newcastle_racing_ai.safety:main',
             'mission_control = newcastle_racing_ai.mission_control:main',
-            'distance_tracker = newcastle_racing_ai.distance_tracker:main',
+            'odometry = newcastle_racing_ai.odometry:main',
         ],
     },
 )

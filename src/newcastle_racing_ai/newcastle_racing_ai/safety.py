@@ -31,7 +31,7 @@ class Safety(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    minimal_publisher = Planner()
+    minimal_publisher = Safety()
     rclpy.spin(minimal_publisher)
     minimal_publisher.destroy_node()
     rclpy.shutdown()

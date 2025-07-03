@@ -1,6 +1,6 @@
 
 # Mission indicator
-uint16 ami_state
+uint16 mission
 
 uint16 AMI_NOT_SELECTED=10
 uint16 AMI_ACCELERATION=11

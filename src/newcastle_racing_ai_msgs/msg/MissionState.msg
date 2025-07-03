@@ -1,5 +1,5 @@
 # State of the Autonomous System
-uint16 as_state
+uint16 mission_state
 
 uint16 AS_OFF=0
 uint16 AS_READY=1
