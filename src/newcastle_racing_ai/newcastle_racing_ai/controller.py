@@ -10,14 +10,17 @@ from newcastle_racing_ai.utils.mpc_module import P, Node as MpcNode, PATH, calc_
 import math
 from math import atan2
 import numpy as np
+from newcastle_racing_ai_msgs.msg import MissionState
+from .parameters import PARAMETERS
 
 class Controller(Node):
     def __init__(self):
         super().__init__('mpc_controller')
-
+        self.declare_parameters(namespace="", parameters=PARAMETERS)
         # --------- ROS subscriptions and publishers ---------
-        self.create_subscription(PathWithBoundaries, "/path", self.on_path, 10)
-        self.create_subscription(Odometry, "/nrfai/odom", self.on_odom, 10)
+        self.create_subscription(PathWithBoundaries,  self.get_parameter("path_topic").value, self.on_path, 10)
+        self.create_subscription(Odometry, self.get_parameter("odom_topic").value, self.on_odom, 10)
+        self.create_subscription(MissionState, self.get_parameter("mission_state_topic").value, self.on_drive_command, 10)
         self.publisher = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
 
         # --------- MPC internal buffers ---------
@@ -28,8 +31,27 @@ class Controller(Node):
         self.delta_opt = None
         self.max_speed = 1
 
+        # --------- Mission Control state management ---------
+        self.drive = False  # Flag to indicate if the car should drive
+        self.full_brake_stop = AckermannDriveStamped()
+        self.full_brake_stop.drive.steering_angle = 0.0
+        self.full_brake_stop.drive.acceleration = -1.0
+        self.full_brake_stop.drive.speed = 0.0
+
         # Main control loop, 20 Hz
         self.create_timer(0.05, self.timer_callback)
+
+    def on_drive_command(self, msg):
+        """
+        Callback to handle drive commands from the mission control node.
+        This sets the drive flag to True when the car should start driving.
+        """
+        if msg.as_state == MissionState.AS_DRIVING:
+            self.get_logger().info("Received drive command, starting MPC control.")
+            self.drive = True
+        elif msg.as_state == MissionState.AS_FINISHED:
+            self.get_logger().info("Received finish command, stopping MPC control.")
+            self.drive = False
 
     # --------- Callback: path subscription (from planner) ---------
     def on_path(self, msg):
@@ -81,7 +103,13 @@ class Controller(Node):
         #msg.drive.speed = float(self.vehicle_state[2] + a_opt[0] * P.dt)
         msg.drive.speed = float(self.vehicle_state[2])
         msg.drive.acceleration = float(a_opt[0])
-        self.publisher.publish(msg)
+        # only publish if mission control has set the drive flag
+        if self.drive:
+            self.publisher.publish(msg)
+        else:
+            # If not driving, send full brake stop command
+            self.publisher.publish(self.full_brake_stop)
+            self.get_logger().info("Drive flag is False, sending full brake stop command.")
 
         # Update warm start cache
         self.a_opt = a_opt
@@ -110,6 +138,7 @@ def path_to_pose_array(path):
         cyaw.append(theta)
 
     return cx, cy, cyaw
+
 
 def main(args=None):
     rclpy.init(args=args)
