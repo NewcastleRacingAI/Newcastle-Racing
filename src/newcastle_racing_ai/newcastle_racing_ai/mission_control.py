@@ -55,7 +55,20 @@ class Mission_Control(Node):
         self.steering.drive.speed = 0.5
         self.steering.drive.acceleration = 0.0
       
-
+    # --------- Callback: odometry/localization subscription ---------
+    def on_odom(self, msg):
+        self.odom = msg
+        self.get_logger().info('Received odometry data: %s' % self.odom)
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
+        vx = msg.twist.twist.linear.x
+        vy = msg.twist.twist.linear.y
+        v = math.hypot(vx, vy)
+        q = msg.pose.pose.orientation
+        siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
+        cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
+        yaw = math.atan2(siny_cosp, cosy_cosp)
+        self.vehicle_state = [x, y, v, yaw]
 
     def _on_state(self, msg):
         self.get_logger().info('Received: "%s"' % type(msg))
@@ -72,12 +85,6 @@ class Mission_Control(Node):
             mission_msg = Mission()
             mission_msg.mission = self.mission
             #self._publisher_mission.publish(self.mission_msg)
-
-    def _on_odom(self, msg):
-        self.odom = msg
-        self.get_logger().info('Received odometry data: %s' % self.odom)
-        # add the distance tracking and whether the car is stopped or driving here to be used in demo mission
-        
         
 
     def mission(self):
@@ -145,16 +152,59 @@ class Mission_Control(Node):
                         self._publisher_cmd.publish(self.steering)
                         self.demo_state = 3
                 elif (self.get_clock().now() - self.initial_time) > Duration(seconds=40):
+                    # start measuring distance travelled
+                    x_dist = self.odom.pose.pose.position.x - self.initial_odom.pose.pose.position.x
+                    y_dist = self.odom.pose.pose.position.y - self.initial_odom.pose.pose.position.y
+                    self.total_distance = np.sqrt(x_dist**2 + y_dist**2)
+                    self.get_logger().info('Total distance travelled: %s m' % self.total_distance)
+                    
                     if self.demo_state == 3:
                         self._publisher_mission_state(self.mission_state_msg)
                         self.demo_state = 4
                     elif self.demo_state == 4:
-                        x_dist = self.odom.pose.pose.position.x - self.initial_odom.pose.pose.position.x
-                        y_dist = self.odom.pose.pose.position.y - self.initial_odom.pose.pose.position.y
-                        self.total_distance = np.sqrt(x_dist**2 + y_dist**2)
-                        if self.total_distance > 10:
-                            self.mission_state_msg.mission_state = MissionState.AS_BRAKE
-                            self._publisher_mission_state(self.mission_state_msg)
+                        #checking to see if travelled 10m
+                        if self.total_distance > 10 and self.total_distance < 20 and self.demo_state == 4:
+                            if self.vehicle_state[2] > 0.1:
+                                self.mission_state_msg.mission_state = MissionState.AS_BRAKE
+                                self._publisher_mission_state(self.mission_state_msg)
+                            elif self.vehicle_state[2] < 0.1:
+                                if self.demo_state == 4:
+                                    self.mission_state_msg.mission_state = MissionState.AS_DRIVING
+                                    self._publisher_mission_state(self.mission_state_msg)
+                                    #reset the distance travelled
+                                    self.initial_odom = self.odom
+                                    self.demo_state = 5
+                    elif self.demo_state == 5:
+                        if self.total_distance > 10 and self.total_distance < 20 and self.demo_state == 5:
+                            if self.vehicle_state[2] > 0.1:
+                                self.mission_state_msg.mission_state = MissionState.AS_EMERGENCY_BRAKE
+                                # this might need to be handled by a message to safety node
+                                self._publisher_mission_state(self.mission_state_msg)
+                            elif self.vehicle_state[2] < 0.1:
+                                if self.demo_state == 5:
+                                    self.mission_state_msg.mission_state = MissionState.AS_FINISHED
+                                    self.can_reply.AS_State = self.mission_state_msg.mission_state
+                                    self.can_reply.ami_state = self.mission
+                                    self._publisher_can.publish(self.can_reply)
+                                    self._publisher_mission_state(self.mission_state_msg)
+                                    #reset the distance travelled
+                                    self.initial_odom = self.odom
+                                    self.demo_state = 6
+                    elif self.demo_state == 6:
+                        self.get_logger().info('Demonstration mission finished, resetting state machine...')
+                        self.mission = Mission.AMI_NOT_SELECTED
+                        self.mission_state = MissionState.AS_OFF
+                        self.mission_state_msg.mission_state = self.mission_state
+                        self.can_reply.AS_State = self.mission_state_msg.mission_state
+                        self.can_reply.ami_state = self.mission
+                        self._publisher_can.publish(self.can_reply)
+                        self._publisher_mission_state(self.mission_state_msg)
+                        # reset the initial odom and time
+                        self.initial_odom = Odometry()
+                        self.initial_time = None
+                        self.demo_state = 0
+
+
                             
                         
                 
