@@ -20,7 +20,7 @@ class Controller(Node):
         # --------- ROS subscriptions and publishers ---------
         self.create_subscription(PathWithBoundaries,  self.get_parameter("path_topic").value, self.on_path, 10)
         self.create_subscription(Odometry, self.get_parameter("odom_topic").value, self.on_odom, 10)
-        self.create_subscription(MissionState, self.get_parameter("mission_state_topic").value, self.on_drive_command, 10)
+        self.create_subscription(MissionState, self.get_parameter("mission_state_topic").value, self.on_state_command, 10)
         self.control_publisher = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
 
         # --------- MPC internal buffers ---------
@@ -32,26 +32,29 @@ class Controller(Node):
         self.max_speed = 1
 
         # --------- Mission Control state management ---------
-        self.as_state = MissionState()
-        self.as_state.as_state = MissionState.AS_OFF  # Initial state
+        self.mission_state = MissionState()
+        self.mission_state.mission_state = MissionState.AS_OFF  # Initial state
         self.full_brake_stop = AckermannDriveStamped()
         self.full_brake_stop.drive.steering_angle = 0.0
         self.full_brake_stop.drive.acceleration = -1.0
         self.full_brake_stop.drive.speed = 0.0
+        self.cmd = AckermannDriveStamped()
+        
 
         # Main control loop, 20 Hz
-        self.create_timer(0.05, self.timer_callback)
+        self.create_timer(0.2, self.timer_callback)
 
-    def on_drive_command(self, msg):
+    def on_state_command(self, msg):
         """
         Callback to handle drive commands from the mission control node.
         This sets the drive flag to True when the car should start driving.
         """
-        if msg.as_state == MissionState.AS_DRIVING:
+        self.mission_state.mission_state = msg.mission_state
+        if msg.mission_state == MissionState.AS_DRIVING:
             self.get_logger().info("Received drive command, starting MPC control.")
-        elif msg.as_state == MissionState.AS_BRAKE:
+        elif msg.mission_state == MissionState.AS_BRAKE:
             self.get_logger().info("Received brake command, controlled braking starting.")
-        elif msg.as_state == MissionState.AS_FINISHED:
+        elif msg.mission_state == MissionState.AS_FINISHED:
             self.get_logger().info("Received finish command, braking then stopping MPC control.")
 
 
@@ -92,6 +95,7 @@ class Controller(Node):
     def timer_callback(self):
         # Only run MPC if both path and vehicle state are available
         if self.ref_path is None or self.vehicle_state is None:
+            self.get_logger().warn("MPC control not running: missing path or vehicle state.")
             return
 
         node = MpcNode(*self.vehicle_state)
@@ -99,28 +103,28 @@ class Controller(Node):
         # Warm start support for improved optimization speed
         a_opt, delta_opt, *_ = linear_mpc_control(z_ref, self.vehicle_state, self.a_opt, self.delta_opt)
 
-        msg = AckermannDriveStamped()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.drive.steering_angle = float(delta_opt[0])
+        
+        self.cmd.header.stamp = self.get_clock().now().to_msg()
+        self.cmd.drive.steering_angle = float(delta_opt[0])
         #msg.drive.speed = float(self.vehicle_state[2] + a_opt[0] * P.dt)
-        msg.drive.speed = float(self.vehicle_state[2])
-        msg.drive.acceleration = float(a_opt[0])
+        self.cmd.drive.speed = float(self.vehicle_state[2])
+        self.cmd.drive.acceleration = float(a_opt[0])
         # only publish if mission control has set the drive flag
-        if self.as_state.as_state == MissionState.AS_OFF or self.as_state.as_state == MissionState.AS_READY or self.as_state.as_state == MissionState.AS_FINISHED:
+        if self.mission_state.mission_state == MissionState.AS_OFF or self.mission_state.mission_state == MissionState.AS_READY or self.mission_state.mission_state == MissionState.AS_FINISHED:
             self.get_logger().info("System not ready to drive, not publishing control command.")
-        elif self.as_state.as_state == MissionState.AS_DRIVING:
+        elif self.mission_state.mission_state == MissionState.AS_DRIVING:
             # If driving, publish the control command
-            self.get_logger().info(f"Publishing control command: speed={msg.drive.speed}, steering={msg.drive.steering_angle}, acceleration={msg.drive.acceleration}")
-            self.control_publisher.publish(msg)
-        elif self.as_state.as_state == MissionState.AS_BRAKE or self.as_state.as_state == MissionState.AS_EMERGENCY_BRAKE:
+            self.get_logger().info(f"Publishing control command: speed={self.cmd.drive.speed}, steering={self.cmd.drive.steering_angle}, acceleration={self.cmd.drive.acceleration}")
+            self.control_publisher.publish(self.cmd)
+        elif self.mission_state.mission_state == MissionState.AS_BRAKE or self.mission_state.mission_state == MissionState.AS_EMERGENCY_BRAKE:
             # If not driving, send full brake stop command
-            self.msg.drive.speed = 0.0
-            self.msg.drive.acceleration = -1.0
-            self.control_publisher.publish(self.msg)
+            self.cmd.drive.speed = 0.0
+            self.cmd.drive.acceleration = -1.0
+            self.control_publisher.publish(self.cmd)
             self.get_logger().info("Braking command sent, stopping vehicle.")
             if self.vehicle_state[2] < 0.1:
                 # If vehicle is stopped, set mission state to finished
-                self.as_state.as_state = MissionState.AS_READY
+                self.mission_state.mission_state = MissionState.AS_READY
                 self.get_logger().info("Vehicle stopped, setting mission state to ready.")
 
         # Update warm start cache

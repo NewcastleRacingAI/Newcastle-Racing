@@ -6,6 +6,7 @@ from newcastle_racing_ai_msgs.msg import Mission, MissionState
 from ackermann_msgs.msg import AckermannDriveStamped
 import numpy as np
 from rclpy.duration import Duration
+import math
 
 from .parameters import PARAMETERS
 
@@ -38,6 +39,7 @@ class Mission_Control(Node):
         self.cmd = AckermannDriveStamped()
         self.initial_odom = Odometry()
         self.initial_time = None
+        self.demo_state = 0
         # for a quick start
         self.full_steam_ahead = AckermannDriveStamped()
         self.full_steam_ahead.drive.steering_angle = 0.0
@@ -51,14 +53,14 @@ class Mission_Control(Node):
         # for demonstration mission
         self.steering = AckermannDriveStamped()
         self.steering.drive.steering_angle = 0.0
-        self.steering.drive.steering_angle_velocity = 0.2
-        self.steering.drive.speed = 0.5
+        self.steering.drive.steering_angle_velocity = 0.01
+        self.steering.drive.speed = 0.0
         self.steering.drive.acceleration = 0.0
       
     # --------- Callback: odometry/localization subscription ---------
-    def on_odom(self, msg):
+    def _on_odom(self, msg):
         self.odom = msg
-        self.get_logger().info('Received odometry data: %s' % self.odom)
+        #self.get_logger().info('Received odometry data: %s' % self.odom)
         x = msg.pose.pose.position.x
         y = msg.pose.pose.position.y
         vx = msg.twist.twist.linear.x
@@ -71,35 +73,42 @@ class Mission_Control(Node):
         self.vehicle_state = [x, y, v, yaw]
 
     def _on_state(self, msg):
-        self.get_logger().info('Received: "%s"' % type(msg))
-        if msg.as_state != MissionState.AS_OFF:
+        #self.get_logger().info('Received: "%s"' % type(msg))
+        if msg.as_state != MissionState.AS_OFF and self.mission_state != msg.as_state:
             self.get_logger().info('Received mission state: %s' % msg.as_state)
-            mission_state_msg = MissionState()
             self.mission_state = msg.as_state
-            mission_state_msg.mission_state = self.mission_state
-        if self.mission != Mission.AMI_NOT_SELECTED:
-            self.get_logger().info('Mission already selected: %s' % self.mission)
-            return
-        else:
+            self.mission_state_msg.mission_state = self.mission_state
+        if msg.ami_state != Mission.AMI_NOT_SELECTED and self.mission != msg.ami_state:
+            self.get_logger().info('Mission selected: %s' % self.mission)
             self.mission = msg.ami_state
-            mission_msg = Mission()
-            mission_msg.mission = self.mission
-            #self._publisher_mission.publish(self.mission_msg)
-        
+            self.mission_msg.mission = self.mission
 
+    def get_total_distance(self, x, y):
+        """
+        Calculate the total distance travelled from the initial odometry position.
+        """
+        if self.initial_odom.pose.pose.position.x == 0 and self.initial_odom.pose.pose.position.y == 0:
+            return 0.0
+        x_dist = x - self.initial_odom.pose.pose.position.x
+        y_dist = y - self.initial_odom.pose.pose.position.y
+        total_distance = np.sqrt(x_dist**2 + y_dist**2)
+        self.get_logger().info('Total distance travelled: %s m' % total_distance)
+        return total_distance
+        
     def mission(self):
         """
         This is a state machine that controls the mission.
         """
         if self.mission == Mission.AMI_NOT_SELECTED:
             self.get_logger().info('No mission selected, waiting for signal...')
-            self.initial_odom = self.odom
-            self.initial_time = self.get_clock().now()
             return
         # Static Mission A
         # still need to find out how to get the rpm
         elif self.mission == Mission.AMI_DDT_INSPECTION_A:
-            self.get_logger().info('Starting inspection mission A...')
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Starting inspection mission A...')
+                self.initial_odom = self.odom
+                self.initial_time = self.get_clock().now()
             if self.mission_state == MissionState.AS_DRIVING:
                 self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
@@ -108,102 +117,140 @@ class Mission_Control(Node):
                     self._publisher_cmd.publish(self.full_steam_ahead)
                 else:
                     self.mission_state = MissionState.AS_FINISHED
-                    self.can_reply.AS_State = self.mission_state
+                    self.can_reply.as_state = self.mission_state
                     self.can_reply.ami_state = self.mission
                     self._publisher_cmd.publish(self.full_brake_stop)
                     self._publisher_can.publish(self.can_reply)
         # Static Mission B
         # still need to find out how to get the rpm
         elif self.mission == Mission.AMI_DDT_INSPECTION_B:
-            self.get_logger().info('Starting inspection mission B...')
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Starting inspection mission B...')
+                self.initial_odom = self.odom
+                self.initial_time = self.get_clock().now()
             if self.mission_state == MissionState.AS_DRIVING:
                 self.get_logger().info('AMI_DDT_INSPECTION_B is ready, starting driving...')
-                self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
+                elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
+                self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 # For 0-10 s drive full steam ahead, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
                     self._publisher_cmd.publish(self.full_steam_ahead)
                 else:
                     self.mission_state = MissionState.AS_FINISHED
-                    self.can_reply.AS_State = self.AS_EMERGENCY_BRAKE
+                    self.can_reply.as_state = CanState.AS_EMERGENCY_BRAKE
                     self.can_reply.ami_state = self.mission
                     self._publisher_can.publish(self.can_reply)
         # Demonstration Mission
         elif self.mission == Mission.AMI_AUTONOMOUS_DEMO:
-            self.get_logger().info('Starting Demonstration Mission...')
-            self.demo_state = 0
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Starting Demonstration Mission...')
+                self.initial_time = self.get_clock().now()
             if self.mission_state == MissionState.AS_DRIVING:
+                elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
+                self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 self.get_logger().info('AMI_Autonomous_Demo is ready, starting driving...')
                 # turn left for 10s
-                if (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
-                    if self.demo_state == 0:
-                        self.steering.drive.steering_angle = -1.0
-                        self._publisher_cmd.publish(self.steering)
-                        self.demo_state = 1
+                if (self.get_clock().now() - self.initial_time) < Duration(seconds=5):
+                    # demo states progress after cmd sent, so cmd is only sent once per state
+                   # if self.demo_state == 0:
+                    self.get_logger().info('-------Turning left------')
+                    self.steering.drive.steering_angle = 1.0
+                    self._publisher_cmd.publish(self.steering)
+                        #self.demo_state = 1
                 # turn right for 10s
-                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=20):
-                    if self.demo_state == 1:
-                        self.steering.drive.steering_angle = 1.0
-                        self._publisher_cmd.publish(self.steering)
-                        self.demo_state = 2
+                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
+                    #if self.demo_state == 1:
+                    self.get_logger().info('--------Turning right --------')
+                    self.steering.drive.steering_angle = -1.0
+                    self._publisher_cmd.publish(self.steering)
+                        #self.demo_state = 2
                 #turn straight for 10s
-                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=30):
-                    if self.demo_state == 2:
-                        self.steering.drive.steering_angle = 0.0
-                        self._publisher_cmd.publish(self.steering)
-                        self.demo_state = 3
-                elif (self.get_clock().now() - self.initial_time) > Duration(seconds=40):
+                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=15):
+                   # if self.demo_state == 2:
+                    self.get_logger().info('------Turning straight-------')
+                    self.steering.drive.steering_angle = 0.0
+                    self._publisher_cmd.publish(self.steering)
+                        #self.demo_state = 3
+                elif (self.get_clock().now() - self.initial_time) > Duration(seconds=20):
                     # start measuring distance travelled
-                    x_dist = self.odom.pose.pose.position.x - self.initial_odom.pose.pose.position.x
-                    y_dist = self.odom.pose.pose.position.y - self.initial_odom.pose.pose.position.y
-                    self.total_distance = np.sqrt(x_dist**2 + y_dist**2)
-                    self.get_logger().info('Total distance travelled: %s m' % self.total_distance)
-                    
+                    self.total_distance = self.get_total_distance(self.odom.pose.pose.position.x, self.odom.pose.pose.position.y)
                     if self.demo_state == 3:
-                        self._publisher_mission_state(self.mission_state_msg)
+                        # tell controller to take over the driving
+                        self.get_logger().info('------Starting driving-------')
+                        self._publisher_mission_state.publish(self.mission_state_msg)
                         self.demo_state = 4
                     elif self.demo_state == 4:
-                        #checking to see if travelled 10m
+                        #checking to see if travelled  first 10m
                         if self.total_distance > 10 and self.total_distance < 20 and self.demo_state == 4:
                             if self.vehicle_state[2] > 0.1:
                                 self.mission_state_msg.mission_state = MissionState.AS_BRAKE
-                                self._publisher_mission_state(self.mission_state_msg)
+                                self._publisher_mission_state.publish(self.mission_state_msg)
                             elif self.vehicle_state[2] < 0.1:
                                 if self.demo_state == 4:
                                     self.mission_state_msg.mission_state = MissionState.AS_DRIVING
-                                    self._publisher_mission_state(self.mission_state_msg)
+                                    self._publisher_mission_state.publish(self.mission_state_msg)
                                     #reset the distance travelled
                                     self.initial_odom = self.odom
                                     self.demo_state = 5
+                    # start moving the next 10m
                     elif self.demo_state == 5:
                         if self.total_distance > 10 and self.total_distance < 20 and self.demo_state == 5:
                             if self.vehicle_state[2] > 0.1:
                                 self.mission_state_msg.mission_state = MissionState.AS_EMERGENCY_BRAKE
                                 # this might need to be handled by a message to safety node
-                                self._publisher_mission_state(self.mission_state_msg)
+                                self._publisher_mission_state.publish(self.mission_state_msg)
                             elif self.vehicle_state[2] < 0.1:
                                 if self.demo_state == 5:
                                     self.mission_state_msg.mission_state = MissionState.AS_FINISHED
                                     self.can_reply.AS_State = self.mission_state_msg.mission_state
                                     self.can_reply.ami_state = self.mission
                                     self._publisher_can.publish(self.can_reply)
-                                    self._publisher_mission_state(self.mission_state_msg)
+                                    self._publisher_mission_state.publish(self.mission_state_msg)
                                     #reset the distance travelled
                                     self.initial_odom = self.odom
                                     self.demo_state = 6
                     elif self.demo_state == 6:
                         self.get_logger().info('Demonstration mission finished, resetting state machine...')
-                        self.mission = Mission.AMI_NOT_SELECTED
-                        self.mission_state = MissionState.AS_OFF
+                        self.mission_state = MissionState.AS_FINISHED
                         self.mission_state_msg.mission_state = self.mission_state
-                        self.can_reply.AS_State = self.mission_state_msg.mission_state
+                        self.can_reply.as_state = self.mission_state_msg.mission_state
                         self.can_reply.ami_state = self.mission
                         self._publisher_can.publish(self.can_reply)
-                        self._publisher_mission_state(self.mission_state_msg)
+                        self._publisher_mission_state.publish(self.mission_state_msg)
                         # reset the initial odom and time
                         self.initial_odom = Odometry()
                         self.initial_time = None
                         self.demo_state = 0
+        #acceleration mission
+        elif self.mission == Mission.AMI_ACCELERATION:
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Ready for Acceleration Mission...')
+                self.initial_time = self.get_clock().now()
+                self.odom = self.initial_odom
+            elif self.mission_state == MissionState.AS_DRIVING:
+                self.get_logger().info('AMI_Autonomous_Demo is ready, starting driving...')
+                elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
+                self.get_logger().info('Time = %.2f seconds' % elapsed_time)
+                self.total_distance = self.get_total_distance(self.odom.pose.pose.position.x, self.odom.pose.pose.position.y)
+                if self.total_distance <= 75:
+                    self.mission_state_msg.mission_state = MissionState.AS_DRIVING
+                    self._publisher_mission_state.publish(self.mission_state_msg)
+                elif self.total_distance > 75:
+                    if self.vehicle_state[2] > 0.1:
+                        self.mission_state_msg.mission_state = MissionState.AS_BRAKE
+                        self._publisher_mission_state.publish(self.mission_state_msg)
+                    elif self.vehicle_state[2] < 0.1:
+                            self.mission_state_msg.mission_state = MissionState.AS_FINISHED
+                            self._publisher_mission_state.publish(self.mission_state_msg)
+                            self.can_reply.as_state = self.mission_state_msg.mission_state
+                            self._publisher_can.publish(self.can_reply)
+            elif self.mission_state == MissionState.AS_FINISHED:
+                self.get_logger().info('Mission Finished')
 
+
+
+
+                
 
                             
                         

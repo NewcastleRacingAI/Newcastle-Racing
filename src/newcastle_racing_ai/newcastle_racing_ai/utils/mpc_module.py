@@ -20,7 +20,7 @@ class P:
     iter_max = 5  # max iteration
     target_speed = 20.0  # target speed, previously 10.0 / 3.6
     N_IND = 10  # search index number
-    dt = 0.05  # time step
+    dt = 0.2  # time step
     d_dist = 1.0  # dist step
     du_res = 0.1  # threshold for stopping iteration
 
@@ -34,11 +34,11 @@ class P:
     TW = 0.7  # [m] Tyre width
 
     steer_max = np.deg2rad(45.0)  # max steering angle [rad]
-    steer_change_max = np.deg2rad(30.0)  # maximum steering speed [rad/s]
+    steer_change_max = np.deg2rad(2.0)  # maximum steering speed [rad/s] previously 30.0
     #speed_max = 55.0 / 3.6  # maximum speed [m/s]
     speed_max = 55.0
     speed_min = -20.0 / 3.6  # minimum speed [m/s]
-    acceleration_max = 1.0  # maximum acceleration [m/s2]
+    acceleration_max = 5.0  # maximum acceleration [m/s2]
 
 
 class Node:
