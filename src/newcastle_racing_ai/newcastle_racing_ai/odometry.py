@@ -28,7 +28,7 @@ class OdometryNode(Node):
 
     def publish_odometry(self):
         imu = self.imu
-        self.get_logger().info(f"Received IMU data: {imu.header.stamp.sec}.{imu.header.stamp.nanosec} - Acceleration: {imu.linear_acceleration.x}, {imu.linear_acceleration.y}, {imu.linear_acceleration.z}")
+        #self.get_logger().info(f"Received IMU data: {imu.header.stamp.sec}.{imu.header.stamp.nanosec} - Acceleration: {imu.linear_acceleration.x}, {imu.linear_acceleration.y}, {imu.linear_acceleration.z}")
         current_time = imu.header.stamp.sec + imu.header.stamp.nanosec * 1e-9
         if self.prev_time is None:
             self.prev_time = current_time

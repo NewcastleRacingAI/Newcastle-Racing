@@ -33,12 +33,12 @@ class P:
     TR = 0.44  # [m] Tyre radius
     TW = 0.7  # [m] Tyre width
 
-    steer_max = np.deg2rad(45.0)  # max steering angle [rad]
-    steer_change_max = np.deg2rad(2.0)  # maximum steering speed [rad/s] previously 30.0
+    steer_max = 1  # max steering angle [rad]
+    steer_change_max = 0.01  # maximum steering speed [rad/s] previously np.deg2rad(30.0)
     #speed_max = 55.0 / 3.6  # maximum speed [m/s]
-    speed_max = 55.0
-    speed_min = -20.0 / 3.6  # minimum speed [m/s]
-    acceleration_max = 5.0  # maximum acceleration [m/s2]
+    speed_max = 1.0 / 3.6
+    speed_min =  0 # minimum speed [m/s] previously -20.0 / 3.6
+    acceleration_max = 1.0  # maximum acceleration [m/s2]
 
 
 class Node:

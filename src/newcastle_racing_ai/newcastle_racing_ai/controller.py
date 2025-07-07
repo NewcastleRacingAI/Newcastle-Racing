@@ -39,6 +39,8 @@ class Controller(Node):
         self.full_brake_stop.drive.acceleration = -1.0
         self.full_brake_stop.drive.speed = 0.0
         self.cmd = AckermannDriveStamped()
+        self.path = PathWithBoundaries(). path = []  # Initialize path as an empty list
+        self.odom = Odometry()
         
 
         # Main control loop, 20 Hz
@@ -60,32 +62,23 @@ class Controller(Node):
 
     # --------- Callback: path subscription (from planner) ---------
     def on_path(self, msg):
-        # cx, cy, cyaw = [], [], []
-        cx, cy, cyaw = path_to_pose_array(msg.path)
-        # for pose in pose_array:
-        #     cx.append(pose.position.x)
-        #     cy.append(pose.position.y)
-        #     # Convert quaternion to yaw (Euler angle)
-        #     q = pose.orientation
-        #     siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
-        #     cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
-        #     yaw = math.atan2(siny_cosp, cosy_cosp)
-        #     cyaw.append(yaw)
-        if len(cx) < 2:
-            self.get_logger().warn("Received path too short for MPC control.")
-            return
-        ck = [0.0] * len(cx)  # Curvature (not used, but required by PATH class)
-        self.ref_path = PATH(cx, cy, cyaw, ck)
-        self.sp = [P.target_speed] * len(cx)  # Constant speed profile; can be adapted as needed
+        self.path = msg.path
+        #self.get_logger().info(f"Received path with {len(self.path)} points.")
+        
 
     # --------- Callback: odometry/localization subscription ---------
     def on_odom(self, msg):
-        x = msg.pose.pose.position.x
-        y = msg.pose.pose.position.y
-        vx = msg.twist.twist.linear.x
-        vy = msg.twist.twist.linear.y
+        self.odom = msg
+        
+    
+    def odom_2_vehicle_state(self):
+        """ Converts an Odometry message to a vehicle state vector. """
+        x = self.odom.pose.pose.position.x
+        y = self.odom.pose.pose.position.y
+        vx = self.odom.twist.twist.linear.x
+        vy = self.odom.twist.twist.linear.y
         v = math.hypot(vx, vy)
-        q = msg.pose.pose.orientation
+        q = self.odom.pose.pose.orientation
         siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
         cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
         yaw = math.atan2(siny_cosp, cosy_cosp)
@@ -93,7 +86,17 @@ class Controller(Node):
 
     # --------- Main timer callback (core MPC loop) ---------
     def timer_callback(self):
-        # Only run MPC if both path and vehicle state are available
+        if len(self.path) < 2:
+            self.get_logger().warn("Reference path is empty or too short. MPC control not running.")
+            return
+        
+        cx, cy, cyaw = self.path_to_pose_array()  # Convert path to arrays of x, y, yaw
+        ck = [0.0] * len(cx)  # Curvature (not used, but required by PATH class)
+        self.ref_path = PATH(cx, cy, cyaw, ck)
+                # Only run MPC if both path and vehicle state are available
+        self.sp = [P.target_speed] * len(cx)  # Constant speed profile; can be adapted as needed
+        self.odom_2_vehicle_state()  # Update vehicle state from odometry
+        
         if self.ref_path is None or self.vehicle_state is None:
             self.get_logger().warn("MPC control not running: missing path or vehicle state.")
             return
@@ -131,29 +134,29 @@ class Controller(Node):
         self.a_opt = a_opt
         self.delta_opt = delta_opt
 
-def path_to_pose_array(path):
-    """
-    Converts a geometry_msgs/Point[] path to a list of objects with .position.x, .position.y, .orientation (quaternion).
-    Each pose's orientation is set so that yaw (theta) points to the next point.
-    """
-    cx, cy, cyaw = [], [], []
-    n = len(path)
-    for i in range(n):
-        x = path[i].x
-        y = path[i].y
-        _ = path[i].z
-        if i < n - 1:
-            dx = path[i + 1].x - x
-            dy = path[i + 1].y - y
-            theta = math.atan2(dy, dx)
-        else:
-            theta = math.atan2(path[i].y - path[i-1].y, path[i].x - path[i-1].x) if i > 0 else 0.0
- 
-        cx.append(x)
-        cy.append(y)
-        cyaw.append(theta)
+    def path_to_pose_array(self):
+        """
+        Converts a geometry_msgs/Point[] path to a list of objects with .position.x, .position.y, .orientation (quaternion).
+        Each pose's orientation is set so that yaw (theta) points to the next point.
+        """
+        cx, cy, cyaw = [], [], []
+        n = len(self.path)
+        for i in range(n):
+            x = self.path[i].x
+            y = self.path[i].y
+            _ = self.path[i].z
+            if i < n - 1:
+                dx = self.path[i + 1].x - x
+                dy = self.path[i + 1].y - y
+                theta = math.atan2(dy, dx)
+            else:
+                theta = math.atan2(self.path[i].y - self.path[i-1].y, self.path[i].x - self.path[i-1].x) if i > 0 else 0.0
+    
+            cx.append(x)
+            cy.append(y)
+            cyaw.append(theta)
 
-    return cx, cy, cyaw
+        return cx, cy, cyaw
 
 
 def main(args=None):

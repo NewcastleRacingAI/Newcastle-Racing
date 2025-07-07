@@ -14,20 +14,21 @@ class Safety(Node):
         self._subscription = (MissionState, self.get_parameter("mission_state_topic").value, self._on_mission_state, 10)
         self._subscription = self.create_subscription(CanState, self.get_parameter("can_state_topic").value, self._on_can_state, 10)
         self._publisher = self.create_publisher(EBS, self.get_parameter("ebs_topic").value, 10)
-        self._ebs_active = False
+        self._ebs_active = EBS()
+        self._ebs_active.ebs = False  # Initialize EBS state
         self._timer = self.create_timer(0.1, self._publish_ebs)  # 10 Hz
 
 
     def _on_can_state(self, msg):
         # for message directly from the CAN bus
-        self.get_logger().info('Received from CAN: as_state=%s, ami_state=%s' % (msg.as_state, msg.ami_state))
         if msg.as_state == CanState.AS_EMERGENCY_BRAKE or msg.ami_state == CanState.AMI_ADS_EBS:
+            self.get_logger().info('Received from CAN: as_state=%s, ami_state=%s' % (msg.as_state, msg.ami_state))
             self._ebs_active = True
 
     def _on_mission_state(self, msg):
         # for messages from mission control
-        self.get_logger().info('Received from mission control: "%s"' % msg.mission_state)
         if msg.mission_state == MissionState.AS_EMERGENCY_BRAKE:
+            self.get_logger().info('Received from mission control: "%s"' % msg.mission_state)
             self._ebs_active = True
 
     

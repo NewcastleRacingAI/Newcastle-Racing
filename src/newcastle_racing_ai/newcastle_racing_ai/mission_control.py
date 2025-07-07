@@ -43,12 +43,12 @@ class Mission_Control(Node):
         # for a quick start
         self.full_steam_ahead = AckermannDriveStamped()
         self.full_steam_ahead.drive.steering_angle = 0.0
-        self.full_steam_ahead.drive.acceleration = 1.0
+        self.full_steam_ahead.drive.acceleration = 10.0
         self.full_steam_ahead.drive.speed = 1.0
         # for quick brake stop
         self.full_brake_stop = AckermannDriveStamped()
         self.full_brake_stop.drive.steering_angle = 0.0
-        self.full_brake_stop.drive.acceleration = -1.0
+        self.full_brake_stop.drive.acceleration = -10.0
         self.full_brake_stop.drive.speed = 0.0
         # for demonstration mission
         self.steering = AckermannDriveStamped()
@@ -152,25 +152,25 @@ class Mission_Control(Node):
                 # turn left for 10s
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=5):
                     # demo states progress after cmd sent, so cmd is only sent once per state
-                   # if self.demo_state == 0:
+                    # if self.demo_state == 0:
                     self.get_logger().info('-------Turning left------')
                     self.steering.drive.steering_angle = 1.0
                     self._publisher_cmd.publish(self.steering)
-                        #self.demo_state = 1
+                    #self.demo_state = 1
                 # turn right for 10s
                 elif (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
                     #if self.demo_state == 1:
                     self.get_logger().info('--------Turning right --------')
                     self.steering.drive.steering_angle = -1.0
                     self._publisher_cmd.publish(self.steering)
-                        #self.demo_state = 2
+                    #self.demo_state = 2
                 #turn straight for 10s
                 elif (self.get_clock().now() - self.initial_time) < Duration(seconds=15):
                    # if self.demo_state == 2:
                     self.get_logger().info('------Turning straight-------')
                     self.steering.drive.steering_angle = 0.0
                     self._publisher_cmd.publish(self.steering)
-                        #self.demo_state = 3
+                    self.demo_state = 3
                 elif (self.get_clock().now() - self.initial_time) > Duration(seconds=20):
                     # start measuring distance travelled
                     self.total_distance = self.get_total_distance(self.odom.pose.pose.position.x, self.odom.pose.pose.position.y)
