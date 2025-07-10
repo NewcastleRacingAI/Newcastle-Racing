@@ -9,11 +9,12 @@ from math import atan2, radians
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Header, ColorRGBA
 from geometry_msgs.msg import Point
+from newcastle_racing_ai_msgs.msg import MissionState, Mission
 
 class PathPlanningDualCamVisualizationNode(Node):
     def __init__(self):
         super().__init__('path_planning_dual_cam_visualization_node')
-        self.planner = PathPlanner(MissionTypes.trackdrive)
+        self.mission_received = False
 
         # 初始化小车状态与路径
         self.global_cones = [np.zeros((0, 2)) for _ in range(5)]
@@ -30,6 +31,7 @@ class PathPlanningDualCamVisualizationNode(Node):
         self.create_subscription(CarState, '/odometry_integration/car_state', self.car_state_callback, 10)
         self.create_subscription(ConeArrayWithCovariance, '/ground_truth/cones', self.cones_callback, 10)
         self.create_subscription(Imu, '/camera/imu/data', self.imu_callback, 10)
+        self.create_subscription(Mission, '/mission', self._on_mission, 10)
         self.path_publisher = self.create_publisher(PathWithBoundaries, '/path', 10)
         self.marker_pub = self.create_publisher(Marker, '/visualization_marker', 1)
         self.create_timer(1, self.publish_path)
@@ -42,9 +44,51 @@ class PathPlanningDualCamVisualizationNode(Node):
         plt.ion()
         plt.show()
 
+    def _on_mission(self, msg):
+        """
+        Callback to handle mission messages.
+        This sets the mission type for the path planner.
+        """
+        self.mission_received = True
+        self.get_logger().info(f"Received mission: {msg.mission}")
+        if msg.mission == Mission.AMI_ACCELERATION:
+            self.planner = PathPlanner(MissionTypes.acceleration)
+            self.get_logger().info("Mission set to AMI_ACCELERATION")
+        elif msg.mission == Mission.AMI_SKIDPAD:
+            self.planner = PathPlanner(MissionTypes.skidpad)
+            self.get_logger().info("Mission set to AMI_SKIDPAD")
+        elif msg.mission == Mission.AMI_AUTOCROSS:
+            self.planner = PathPlanner(MissionTypes.autocross)
+            self.get_logger().info("Mission set to AMI_AUTOCROSS")
+        elif msg.mission == Mission.AMI_TRACK_DRIVE:
+            self.planner = PathPlanner(MissionTypes.trackdrive)
+            self.get_logger().info("Mission set to AMI_TRACK_DRIVE")
+        elif msg.mission == Mission.AMI_ADS_EBS:
+            self.planner = PathPlanner(MissionTypes.ebs_test)
+            self.get_logger().info("Mission set to AMI_EBS_TEST")
+        elif msg.mission in (Mission.AMI_AUTONOMOUS_DEMO, Mission.AMI_DDT_INSPECTION_A, Mission.AMI_DDT_INSPECTION_B, Mission.AMI_ADS_DEMO, Mission.AMI_ADS_INSPECTION):
+            self.planner = PathPlanner(MissionTypes.inspection)
+            self.get_logger().info("Mission set to AMI_INSPECTION")
+        elif msg.mission == Mission.AMI_MANUAL \
+            or self.mission == Mission.AMI_JOYSTICK:
+            self.planner = PathPlanner(MissionTypes.manual_driving)
+            self.get_logger().info("Mission set to AMI_MANUAL_DRIVING")
+        else:
+            # this shoudl just catch AMI_NEW_MISSION and AMI_NOT_SELECTED
+            self.get_logger().info("Mission not selected, waiting for mission type.")
+            self.planner = PathPlanner(MissionTypes.none)
+            self.mission_received = False
+    
+    
+
     def publish_path(self):
         """发布路径的可视化数据"""
-        if not isinstance(self.path, tuple) or len(self.path[0]) == 0:
+        if (
+            not isinstance(self.path, tuple)
+            or len(self.path) == 0
+            or len(self.path[0]) == 0
+            or self.mission_received == False
+        ):
             return
 
         path = self.path[0]
@@ -86,17 +130,20 @@ class PathPlanningDualCamVisualizationNode(Node):
         self.check_and_compute_path()
 
     def check_and_compute_path(self):
-        out = self.planner.calculate_path_in_global_frame(
-        self.global_cones, self.car_position, self.car_direction, return_intermediate_results=True
-        )
-        (path, sorted_left, sorted_right, left_cones_with_virtual, right_cones_with_virtual, left_to_right_match, right_to_left_match) = out
+        if self.mission_received:
+            out = self.planner.calculate_path_in_global_frame(
+            self.global_cones, self.car_position, self.car_direction, return_intermediate_results=True
+            )
+            (path, sorted_left, sorted_right, left_cones_with_virtual, right_cones_with_virtual, left_to_right_match, right_to_left_match) = out
 
-        # 确保将所有参数传递给 `publish_path_with_boundaries`
-        self.publish_path_with_boundaries(
-            path, sorted_left, sorted_right, left_cones_with_virtual, right_cones_with_virtual, left_to_right_match, right_to_left_match
-        )
-        self.path = out
-        self.update_plot()
+            # 确保将所有参数传递给 `publish_path_with_boundaries`
+            self.publish_path_with_boundaries(
+                path, sorted_left, sorted_right, left_cones_with_virtual, right_cones_with_virtual, left_to_right_match, right_to_left_match
+            )
+            self.path = out
+            self.update_plot()
+        else:
+            self.get_logger().info("Mission not received yet, skipping path computation.")
     
 
     def publish_path_with_boundaries(self, path, sorted_left, sorted_right, left_cones_with_virtual, right_cones_with_virtual, left_to_right_match, right_to_left_match):

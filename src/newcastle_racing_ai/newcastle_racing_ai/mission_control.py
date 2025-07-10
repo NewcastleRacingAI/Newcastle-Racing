@@ -40,6 +40,7 @@ class Mission_Control(Node):
         self.initial_odom = Odometry()
         self.initial_time = None
         self.demo_state = 0
+        self.drive_state = 0
         # for a quick start
         self.full_steam_ahead = AckermannDriveStamped()
         self.full_steam_ahead.drive.steering_angle = 0.0
@@ -74,6 +75,7 @@ class Mission_Control(Node):
 
     def _on_state(self, msg):
         #self.get_logger().info('Received: "%s"' % type(msg))
+        # this should only trigger the if statements once per mission run
         if msg.as_state != MissionState.AS_OFF and self.mission_state != msg.as_state:
             self.get_logger().info('Received mission state: %s' % msg.as_state)
             self.mission_state = msg.as_state
@@ -82,6 +84,8 @@ class Mission_Control(Node):
             self.get_logger().info('Mission selected: %s' % self.mission)
             self.mission = msg.ami_state
             self.mission_msg.mission = self.mission
+            # mission publisher is primarily for the path planner node
+            self._publisher_mission.publish(self.mission_msg)
 
     def get_total_distance(self, x, y):
         """
@@ -246,17 +250,55 @@ class Mission_Control(Node):
                             self._publisher_can.publish(self.can_reply)
             elif self.mission_state == MissionState.AS_FINISHED:
                 self.get_logger().info('Mission Finished')
+        # Skidpad mission
+        elif self.mission == Mission.AMI_SKIDPAD:
+            # figure of 8
+            # go on go RES signal
+            # 2 laps around each circle then stop
+            # stop within 25m inside the straight section
+            # when stopped transmit the AS_FINISHED state
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Ready for Skidpad Mission...')
+            elif self.mission_state == MissionState.AS_DRIVING and self.drive_state == 0:
+                self.get_logger().info('AMI_Skidpad is ready, starting driving...')
+                self._publisher_mission_state.publish(self.mission_state_msg)
+                self.drive_state = 1
+        elif self.mission == Mission.AMI_AUTOCROSS:
+            # go on goRES signal
+            #1 lap around the autocross track
+            # stop within 30m after the end of the first lap within the cones
+            # when stopped transmit the AS_FINISHED state
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Ready for Skidpad Mission...')
+            elif self.mission_state == MissionState.AS_DRIVING and self.drive_state == 0:
+                self.get_logger().info('AMI_Skidpad is ready, starting driving...')
+                self._publisher_mission_state.publish(self.mission_state_msg)
+                self.drive_state = 1
+        elif self.mission == Mission.AMI_TRACK_DRIVE:
+            # go on goRES signal
+            # 10 laps
+            # stop within 30m after the end of the first lap within the cones
+            # when stopped transmit the AS_FINISHED state
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Ready for Skidpad Mission...')
+            elif self.mission_state == MissionState.AS_DRIVING and self.drive_state == 0:
+                self.get_logger().info('AMI_Skidpad is ready, starting driving...')
+                self._publisher_mission_state.publish(self.mission_state_msg)
+                self.drive_state = 1
+        elif self.mission == Mission.AMI_ADS_INSPECTION:
+            pass
+        elif self.mission == Mission.AMI_ADS_EBS:
+            pass
+        elif self.mission == Mission.AMI_JOYSTICK:
+            pass
+        elif self.mission == Mission.AMI_MANUAL:
+            pass
+        elif self.mission == Mission.AMI_NEW_MISSION:
+            pass
+        else:
+            self.get_logger().warn('Unknown mission selected: %s' % self.mission)
 
 
-
-
-                
-
-                            
-                        
-                
-        
-    
 
 def main(args=None):
     rclpy.init(args=args)
