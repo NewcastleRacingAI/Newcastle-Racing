@@ -24,6 +24,7 @@ set(msg_files
   msg/DistanceTotal.msg
   msg/Mission.msg
   msg/MissionState.msg
+  msg/NewCarState.msg
 )
 
 set(srv_files

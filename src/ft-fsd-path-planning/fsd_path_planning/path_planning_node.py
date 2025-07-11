@@ -34,7 +34,7 @@ class PathPlanningDualCamVisualizationNode(Node):
         self.create_subscription(Mission, '/mission', self._on_mission, 10)
         self.path_publisher = self.create_publisher(PathWithBoundaries, '/path', 10)
         self.marker_pub = self.create_publisher(Marker, '/visualization_marker', 1)
-        self.create_timer(1, self.publish_path)
+        self.create_timer(0.05, self.publish_path)
         # self.create_timer(1, self.stanley_control)
 
         # 初始化 Matplotlib 图形
@@ -74,7 +74,7 @@ class PathPlanningDualCamVisualizationNode(Node):
             self.planner = PathPlanner(MissionTypes.manual_driving)
             self.get_logger().info("Mission set to AMI_MANUAL_DRIVING")
         else:
-            # this shoudl just catch AMI_NEW_MISSION and AMI_NOT_SELECTED
+            # this should just catch AMI_NEW_MISSION and AMI_NOT_SELECTED
             self.get_logger().info("Mission not selected, waiting for mission type.")
             self.planner = PathPlanner(MissionTypes.none)
             self.mission_received = False
@@ -159,6 +159,7 @@ class PathPlanningDualCamVisualizationNode(Node):
         path_msg.right_to_left_match = [int(val) for val in right_to_left_match if isinstance(val, int) and -2147483648 <= val <= 2147483647]
 
         self.path_publisher.publish(path_msg)
+
     def update_plot(self):
         try:
             if not isinstance(self.path, tuple) or len(self.path[0]) == 0:

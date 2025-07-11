@@ -31,7 +31,7 @@ class Mission_Control(Node):
 
         # mission variables
         self.mission_state = MissionState.AS_OFF
-        self.mission = Mission.AMI_NOT_SELECTED
+        self.mission_type = Mission.AMI_NOT_SELECTED
         self.mission_state_msg = MissionState()
         self.mission_msg = Mission()
         self.can_reply = CanState()
@@ -80,10 +80,10 @@ class Mission_Control(Node):
             self.get_logger().info('Received mission state: %s' % msg.as_state)
             self.mission_state = msg.as_state
             self.mission_state_msg.mission_state = self.mission_state
-        if msg.ami_state != Mission.AMI_NOT_SELECTED and self.mission != msg.ami_state:
-            self.get_logger().info('Mission selected: %s' % self.mission)
-            self.mission = msg.ami_state
-            self.mission_msg.mission = self.mission
+        if msg.ami_state != Mission.AMI_NOT_SELECTED and self.mission_type != msg.ami_state:
+            self.get_logger().info('Mission selected: %s' % self.mission_type)
+            self.mission_type = msg.ami_state
+            self.mission_msg.mission = self.mission_type
             # mission publisher is primarily for the path planner node
             self._publisher_mission.publish(self.mission_msg)
 
@@ -103,12 +103,12 @@ class Mission_Control(Node):
         """
         This is a state machine that controls the mission.
         """
-        if self.mission == Mission.AMI_NOT_SELECTED:
+        if self.mission_type == Mission.AMI_NOT_SELECTED:
             self.get_logger().info('No mission selected, waiting for signal...')
             return
         # Static Mission A
         # still need to find out how to get the rpm
-        elif self.mission == Mission.AMI_DDT_INSPECTION_A:
+        elif self.mission_type == Mission.AMI_DDT_INSPECTION_A:
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Starting inspection mission A...')
                 self.initial_odom = self.odom
@@ -122,12 +122,12 @@ class Mission_Control(Node):
                 else:
                     self.mission_state = MissionState.AS_FINISHED
                     self.can_reply.as_state = self.mission_state
-                    self.can_reply.ami_state = self.mission
+                    self.can_reply.ami_state = self.mission_type
                     self._publisher_cmd.publish(self.full_brake_stop)
                     self._publisher_can.publish(self.can_reply)
         # Static Mission B
         # still need to find out how to get the rpm
-        elif self.mission == Mission.AMI_DDT_INSPECTION_B:
+        elif self.mission_type == Mission.AMI_DDT_INSPECTION_B:
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Starting inspection mission B...')
                 self.initial_odom = self.odom
@@ -142,10 +142,10 @@ class Mission_Control(Node):
                 else:
                     self.mission_state = MissionState.AS_FINISHED
                     self.can_reply.as_state = CanState.AS_EMERGENCY_BRAKE
-                    self.can_reply.ami_state = self.mission
+                    self.can_reply.ami_state = self.mission_type
                     self._publisher_can.publish(self.can_reply)
         # Demonstration Mission
-        elif self.mission == Mission.AMI_AUTONOMOUS_DEMO:
+        elif self.mission_type == Mission.AMI_AUTONOMOUS_DEMO:
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Starting Demonstration Mission...')
                 self.initial_time = self.get_clock().now()
@@ -207,7 +207,7 @@ class Mission_Control(Node):
                                 if self.demo_state == 5:
                                     self.mission_state_msg.mission_state = MissionState.AS_FINISHED
                                     self.can_reply.AS_State = self.mission_state_msg.mission_state
-                                    self.can_reply.ami_state = self.mission
+                                    self.can_reply.ami_state = self.mission_type
                                     self._publisher_can.publish(self.can_reply)
                                     self._publisher_mission_state.publish(self.mission_state_msg)
                                     #reset the distance travelled
@@ -218,7 +218,7 @@ class Mission_Control(Node):
                         self.mission_state = MissionState.AS_FINISHED
                         self.mission_state_msg.mission_state = self.mission_state
                         self.can_reply.as_state = self.mission_state_msg.mission_state
-                        self.can_reply.ami_state = self.mission
+                        self.can_reply.ami_state = self.mission_type
                         self._publisher_can.publish(self.can_reply)
                         self._publisher_mission_state.publish(self.mission_state_msg)
                         # reset the initial odom and time
@@ -226,16 +226,17 @@ class Mission_Control(Node):
                         self.initial_time = None
                         self.demo_state = 0
         #acceleration mission
-        elif self.mission == Mission.AMI_ACCELERATION:
+        elif self.mission_type == Mission.AMI_ACCELERATION:
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Ready for Acceleration Mission...')
                 self.initial_time = self.get_clock().now()
                 self.odom = self.initial_odom
             elif self.mission_state == MissionState.AS_DRIVING:
-                self.get_logger().info('AMI_Autonomous_Demo is ready, starting driving...')
+                self.get_logger().info('AMI_Acceleration is ready, starting driving...')
                 elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
                 self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 self.total_distance = self.get_total_distance(self.odom.pose.pose.position.x, self.odom.pose.pose.position.y)
+                self.get_logger().info('Total distance travelled: %.2f m' % self.total_distance)
                 if self.total_distance <= 75:
                     self.mission_state_msg.mission_state = MissionState.AS_DRIVING
                     self._publisher_mission_state.publish(self.mission_state_msg)
@@ -251,7 +252,7 @@ class Mission_Control(Node):
             elif self.mission_state == MissionState.AS_FINISHED:
                 self.get_logger().info('Mission Finished')
         # Skidpad mission
-        elif self.mission == Mission.AMI_SKIDPAD:
+        elif self.mission_type == Mission.AMI_SKIDPAD:
             # figure of 8
             # go on go RES signal
             # 2 laps around each circle then stop
@@ -263,7 +264,7 @@ class Mission_Control(Node):
                 self.get_logger().info('AMI_Skidpad is ready, starting driving...')
                 self._publisher_mission_state.publish(self.mission_state_msg)
                 self.drive_state = 1
-        elif self.mission == Mission.AMI_AUTOCROSS:
+        elif self.mission_type == Mission.AMI_AUTOCROSS:
             # go on goRES signal
             #1 lap around the autocross track
             # stop within 30m after the end of the first lap within the cones
@@ -274,7 +275,7 @@ class Mission_Control(Node):
                 self.get_logger().info('AMI_Skidpad is ready, starting driving...')
                 self._publisher_mission_state.publish(self.mission_state_msg)
                 self.drive_state = 1
-        elif self.mission == Mission.AMI_TRACK_DRIVE:
+        elif self.mission_type == Mission.AMI_TRACK_DRIVE:
             # go on goRES signal
             # 10 laps
             # stop within 30m after the end of the first lap within the cones
@@ -285,18 +286,18 @@ class Mission_Control(Node):
                 self.get_logger().info('AMI_Skidpad is ready, starting driving...')
                 self._publisher_mission_state.publish(self.mission_state_msg)
                 self.drive_state = 1
-        elif self.mission == Mission.AMI_ADS_INSPECTION:
+        elif self.mission_type == Mission.AMI_ADS_INSPECTION:
             pass
-        elif self.mission == Mission.AMI_ADS_EBS:
+        elif self.mission_type == Mission.AMI_ADS_EBS:
             pass
-        elif self.mission == Mission.AMI_JOYSTICK:
+        elif self.mission_type == Mission.AMI_JOYSTICK:
             pass
-        elif self.mission == Mission.AMI_MANUAL:
+        elif self.mission_type == Mission.AMI_MANUAL:
             pass
-        elif self.mission == Mission.AMI_NEW_MISSION:
+        elif self.mission_type == Mission.AMI_NEW_MISSION:
             pass
         else:
-            self.get_logger().warn('Unknown mission selected: %s' % self.mission)
+            self.get_logger().warn('Unknown mission selected: %s' % self.mission_type)
 
 
 

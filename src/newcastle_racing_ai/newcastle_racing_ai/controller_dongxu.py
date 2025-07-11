@@ -1,7 +1,8 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseArray, Pose
-from eufs_msgs.msg import PathWithBoundaries, CarState
+from eufs_msgs.msg import PathWithBoundaries
+#from eufs_sim.msg import CarState
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from ackermann_msgs.msg import AckermannDriveStamped
@@ -18,7 +19,7 @@ class Controller(Node):
         self.declare_parameters(namespace="", parameters=PARAMETERS)
         # --------- ROS subscriptions and publishers ---------
         self.create_subscription(PathWithBoundaries,  self.get_parameter("path_topic").value, self.on_path, 10)
-        self.create_subscription(CarState, self.get_parameter("car_state_topic").value, self.on_car_state, 10)
+        self.create_subscription(Odometry, self.get_parameter("odom_topic").value, self.on_odom, 10)
         self.create_subscription(MissionState, self.get_parameter("mission_state_topic").value, self.on_state_command, 10)
         self.control_publisher = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
 
@@ -39,11 +40,11 @@ class Controller(Node):
         self.full_brake_stop.drive.speed = 0.0
         self.cmd = AckermannDriveStamped()
         self.path = PathWithBoundaries(). path = []  # Initialize path as an empty list
-        #self.odom = Odometry()
-        self.car_state = CarState()
+        self.odom = Odometry()
+        
 
         # Main control loop, 20 Hz
-        self.create_timer(0.05, self.timer_callback)
+        self.create_timer(0.2, self.timer_callback)
 
     def on_state_command(self, msg):
         """
@@ -66,71 +67,72 @@ class Controller(Node):
         
 
     # --------- Callback: odometry/localization subscription ---------
-    def on_car_state(self, msg):
-        self.car_state= msg
+    def on_odom(self, msg):
+        self.odom = msg
         
     
     def odom_2_vehicle_state(self):
         """ Converts an Odometry message to a vehicle state vector. """
-        x = self.car_state.pose.pose.position.x
-        y = self.car_state.pose.pose.position.y
-        vx = self.car_state.twist.twist.linear.x
-        vy = self.car_state.twist.twist.linear.y
+        x = self.odom.pose.pose.position.x
+        y = self.odom.pose.pose.position.y
+        vx = self.odom.twist.twist.linear.x
+        vy = self.odom.twist.twist.linear.y
         v = math.hypot(vx, vy)
-        q = self.car_state.pose.pose.orientation
+        q = self.odom.pose.pose.orientation
         siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
         cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
         yaw = math.atan2(siny_cosp, cosy_cosp)
         self.vehicle_state = [x, y, v, yaw]
-        self.get_logger().info(f"Vehicle state: x={x:.2f}, y={y:.2f}, v={v:.2f}, yaw={yaw:.2f}")
 
     # --------- Main timer callback (core MPC loop) ---------
     def timer_callback(self):
         if len(self.path) < 2:
-            self.get_logger().warn("Path is too short. Skipping control.A")
+            self.get_logger().warn("Reference path is empty or too short. MPC control not running.")
+            return
+        
+        cx, cy, cyaw = self.path_to_pose_array()  # Convert path to arrays of x, y, yaw
+        ck = [0.0] * len(cx)  # Curvature (not used, but required by PATH class)
+        self.ref_path = PATH(cx, cy, cyaw, ck)
+                # Only run MPC if both path and vehicle state are available
+        self.sp = [P.target_speed] * len(cx)  # Constant speed profile; can be adapted as needed
+        self.odom_2_vehicle_state()  # Update vehicle state from odometry
+        
+        if self.ref_path is None or self.vehicle_state is None:
+            self.get_logger().warn("MPC control not running: missing path or vehicle state.")
             return
 
-        if self.mission_state.mission_state not in [MissionState.AS_DRIVING]:
-            self.get_logger().info("Not in DRIVING state. Not publishing command.")
-            return
+        node = MpcNode(*self.vehicle_state)
+        z_ref, _ = calc_ref_trajectory_in_T_step(node, self.ref_path, self.sp)
+        # Warm start support for improved optimization speed
+        a_opt, delta_opt, *_ = linear_mpc_control(z_ref, self.vehicle_state, self.a_opt, self.delta_opt)
 
-        self.odom_2_vehicle_state()
-        if self.vehicle_state is None:
-            self.get_logger().warn("Vehicle state not available yet.")
-            return
-
-        # --- Get current vehicle state ---
-        x, y, v, yaw = self.vehicle_state
-        target_speed = 0.25  # [m/s]
-
-        # --- Get target point from path ---
-        target_point = self.path[1]  # Next point
-        dx = target_point.x - x
-        dy = target_point.y - y
-
-        # --- Calculate heading error ---
-        angle_to_target = math.atan2(dy, dx)
-        heading_error = angle_to_target - yaw
-        heading_error = math.atan2(math.sin(heading_error), math.cos(heading_error))  # Normalize [-pi, pi]
-
-        # --- Steering angle ---
-        steering_angle = heading_error  # Proportional to heading error (simple P controller)
-
-        # --- Acceleration to reach target speed ---
-        speed_error = target_speed - v
-        acceleration = 1.5 * speed_error  # Proportional control
-        acceleration = max(min(acceleration, 2.0), -1.0)  # Clamp acceleration
-
-        # --- Build and publish command ---
+        
         self.cmd.header.stamp = self.get_clock().now().to_msg()
-        self.cmd.drive.steering_angle = steering_angle
-        self.cmd.drive.acceleration = acceleration
+        self.cmd.drive.steering_angle = float(delta_opt[0])
+        #msg.drive.speed = float(self.vehicle_state[2] + a_opt[0] * P.dt)
+        self.cmd.drive.speed = float(self.vehicle_state[2])
+        self.cmd.drive.acceleration = float(a_opt[0])
+        # only publish if mission control has set the drive flag
+        if self.mission_state.mission_state == MissionState.AS_OFF or self.mission_state.mission_state == MissionState.AS_READY or self.mission_state.mission_state == MissionState.AS_FINISHED:
+            self.get_logger().info("System not ready to drive, not publishing control command.")
+        elif self.mission_state.mission_state == MissionState.AS_DRIVING:
+            # If driving, publish the control command
+            self.get_logger().info(f"Publishing control command: speed={self.cmd.drive.speed}, steering={self.cmd.drive.steering_angle}, acceleration={self.cmd.drive.acceleration}")
+            self.control_publisher.publish(self.cmd)
+        elif self.mission_state.mission_state == MissionState.AS_BRAKE or self.mission_state.mission_state == MissionState.AS_EMERGENCY_BRAKE:
+            # If not driving, send full brake stop command
+            self.cmd.drive.speed = 0.0
+            self.cmd.drive.acceleration = -1.0
+            self.control_publisher.publish(self.cmd)
+            self.get_logger().info("Braking command sent, stopping vehicle.")
+            if self.vehicle_state[2] < 0.1:
+                # If vehicle is stopped, set mission state to finished
+                self.mission_state.mission_state = MissionState.AS_READY
+                self.get_logger().info("Vehicle stopped, setting mission state to ready.")
 
-        self.get_logger().info(
-            f"Cmd: speed={v:.2f}, accel={acceleration:.2f}, steering={steering_angle:.2f}, target=({target_point.x:.2f}, {target_point.y:.2f})"
-        )
-        self.control_publisher.publish(self.cmd)
-
+        # Update warm start cache
+        self.a_opt = a_opt
+        self.delta_opt = delta_opt
 
     def path_to_pose_array(self):
         """

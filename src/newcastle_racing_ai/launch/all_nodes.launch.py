@@ -46,12 +46,12 @@ def generate_launch_description():
         executable="safety",
         name="Safety",
         ),
-        # Node(
-        # package=PACKAGE_NAME,
-        # namespace=NAMESPACE,
-        # executable="mission_control",
-        # name="Mission_Control",
-        # ),
+        Node(
+        package=PACKAGE_NAME,
+        namespace=NAMESPACE,
+        executable="mission_control",
+        name="Mission_Control",
+        ),
         Node(
         package=PACKAGE_NAME,
         namespace=NAMESPACE,

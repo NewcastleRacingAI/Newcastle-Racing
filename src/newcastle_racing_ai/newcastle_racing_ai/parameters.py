@@ -5,7 +5,8 @@ PARAMETERS = (
     ("path_topic", "/path"),
     ("cmd_topic", "/cmd"),
     ("imu_topic", "/imu/data"),
-    ("odom_topic", "/odom"),
+    ("odom_topic", "/odom"),#live = /odom,
+    ("car_state_topic", "/odometry_integration/car_state"),
     ("can_state_topic","/ros_can/state"),
     ("ebs_topic", "/ebs"),
     ("mission_topic", "/mission"),
@@ -15,3 +16,4 @@ PARAMETERS = (
     # determines the camera fps that the perception node will run at
     ("camera_time_step", 0.05),
 )
+
