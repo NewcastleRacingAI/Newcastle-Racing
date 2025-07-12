@@ -16,6 +16,6 @@ PARAMETERS = (
     # CONFIGURATION
     ("time_step", 0.0),
     # determines the camera fps that the perception node will run at
-    ("camera_time_step", 0.05),
+    ("camera_time_step", 1),
 )
 

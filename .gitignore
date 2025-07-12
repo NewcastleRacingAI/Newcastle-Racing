@@ -52,3 +52,8 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+# image files
+/src/newcastle_racing_ai/imgs/*.jpg
+/src/newcastle_racing_ai/imgs/*.ppm
+/src/newcastle_racing_ai/imgs/*.png
