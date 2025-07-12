@@ -24,7 +24,7 @@ source /opt/ros/galactic/setup.bash
 # # ignore errors about pandas, matplolib and scipy
 
 # build ros workspace
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to ros_can
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-skip ros_can mpcc_control
 
 # Source ROS and workspace
 source /opt/ros/galactic/setup.bash
