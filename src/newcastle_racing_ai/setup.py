@@ -29,6 +29,7 @@ setup(
             'safety = newcastle_racing_ai.safety:main',
             'mission_control = newcastle_racing_ai.mission_control:main',
             'odometry = newcastle_racing_ai.odometry:main',
+            'camera = newcastle_racing_ai.camera:main',
         ],
     },
 )

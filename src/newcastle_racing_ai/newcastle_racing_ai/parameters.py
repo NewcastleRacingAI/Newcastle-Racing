@@ -1,6 +1,7 @@
 PARAMETERS = (
     # TOPICS
-    ("camera_topic", "/stereo_camera"),
+    ("camera_left_topic", "/camera/left"),
+    ("camera_depth_topic", "/camera/depth"),
     ("cones_topic", "/cones"),
     ("path_topic", "/path"),
     ("cmd_topic", "/cmd"),
