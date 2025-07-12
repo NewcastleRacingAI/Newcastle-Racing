@@ -2,10 +2,14 @@ import os
 import rclpy
 from rclpy.node import Node
 from eufs_mgs.msg import StereoImage
-from sensor_msgs.msg import Image, Imu,
+from sensor_msgs.msg import Image, Imu
 from geometry_msgs.msg import Point
 from newcastle_racing_ai_msgs.msg import ConeArrayWithCovariance, ConeWithCovariance
 from .parameters import PARAMETERS
+import pyzed.sl as sl
+import cv2
+import pandas as pd
+from ultralytics import YOLO
 
 
 class Perception(Node):
@@ -21,6 +25,27 @@ class Perception(Node):
         #self._subscription = self.create_subscription(PointCloud2, self.get_parameter("lidar_topic").value, self._on_lidar, 10)
         self._publisher = self.create_publisher(ConeArrayWithCovariance, self.get_parameter("cones_topic").value, 10)
         self.timer = self.create_timer(self.camera_timer_period, self._timer_callback)
+
+        # Set up camera
+        self.zed = sl.Camera()
+
+        # Set configuration parameters
+        init_params = sl.InitParameters()
+        init_params.coordinate_units = sl.UNIT.METER
+        init_params.camera_resolution = sl.RESOLUTION.HD720
+        init_params.camera_fps = 30
+
+        # Open the camera
+        err = self.zed.open(init_params)
+        if err != sl.ERROR_CODE.SUCCESS:
+            print(repr(err))
+            exit(-1)
+
+        self.runtime_param = sl.RuntimeParameters()
+        self.image = sl.Mat()
+        self.point_cloud = sl.Mat()
+        self.depth_measure = sl.Mat()
+        self.cone_model = YOLO('runs/detect/train6/weights/best.pt')
 
     def _on_camera(self, msg):
         self.get_logger().info('Received: "%s"' % type(msg))
@@ -44,6 +69,39 @@ class Perception(Node):
         # )
         # self._publisher.publish(msg)
         # self.get_logger().info('Publishing: "%s"' % msg)
+
+    def run_camera(self):
+        while True:
+            if self.zed.grab(self.runtime_param) == sl.ERROR_CODE.SUCCESS:
+                self.zed.retrieve_image(self.image, sl.VIEW.LEFT)
+                self.zed.retrieve_measure(self.point_cloud, sl.MEASURE.XYZRGBA)
+                self.zed.retrieve_measure(self.depth_measure, sl.MEASURE.DEPTH)
+                cones_df = pd.DataFrame(columns=['ConeColour', 'X', 'Y', 'Z'])
+                image_np = self.image.get_data()
+                image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
+
+                # Run cone prediction on image
+                results = self.cone_model([image_np])[0]
+
+                # Get coords of each cone in image
+                for cone in results.boxes:
+                    x,y,w,h = cone.xywh[0]
+                    x = round(float(x))
+                    y = round(float(y))
+                    
+                    # Get the 3D point cloud values for pixel (i, j)
+                    cone_x, cone_y, cone_z, _ = self.point_cloud.get_value(x, y)[1]
+                    cone_class = self.cone_model.names[int(cone.cls)][:-5]
+
+                    # Check if cone already exists
+                    buffer = 0.2
+                    if len(cones_df[
+                        (cones_df['ConeColour'] == cone_class) &
+                        (cones_df['X'].between(cone_x-buffer, cone_x+buffer)) &
+                        (cones_df['Z'].between(cone_z-buffer, cone_z+buffer))
+                        ]) == 0:
+                        cones_df.loc[len(cones_df)] = {'ConeColour': cone_class, 'X': cone_x, 'Y': 0, 'Z': cone_z}
+                i = i+1
 
     def save_image_ppm(self, msg, filename="/workspace/newcastle_racing_ai/imgs/image-{}.ppm"):
         # This function is a placeholder for saving the image in ppm format.
