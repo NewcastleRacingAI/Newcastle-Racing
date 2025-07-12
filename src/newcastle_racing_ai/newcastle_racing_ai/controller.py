@@ -70,20 +70,6 @@ class Controller(Node):
         self.car_state= msg
         
     
-    def odom_2_vehicle_state(self):
-        """ Converts an Odometry message to a vehicle state vector. """
-        x = self.car_state.pose.pose.position.x
-        y = self.car_state.pose.pose.position.y
-        vx = self.car_state.twist.twist.linear.x
-        vy = self.car_state.twist.twist.linear.y
-        v = math.hypot(vx, vy)
-        q = self.car_state.pose.pose.orientation
-        siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
-        cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
-        yaw = math.atan2(siny_cosp, cosy_cosp)
-        self.vehicle_state = [x, y, v, yaw]
-        self.get_logger().info(f"Vehicle state: x={x:.2f}, y={y:.2f}, v={v:.2f}, yaw={yaw:.2f}")
-
     # --------- Main timer callback (core MPC loop) ---------
     def timer_callback(self):
         if len(self.path) < 2:
@@ -94,13 +80,9 @@ class Controller(Node):
             self.get_logger().info("Not in DRIVING state. Not publishing command.")
             return
 
-        self.odom_2_vehicle_state()
-        if self.vehicle_state is None:
-            self.get_logger().warn("Vehicle state not available yet.")
-            return
 
         # --- Get current vehicle state ---
-        x, y, v, yaw = self.vehicle_state
+        x, y, v, yaw = self.car_state.x, self.car_state.y, self.car_state.velocity, self.car_state.yaw
         target_speed = 0.25  # [m/s]
 
         # --- Get target point from path ---

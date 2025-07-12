@@ -30,6 +30,7 @@ class OdometryNode(Node):
         self.velocity = np.zeros(3)
         self.imu = None
         self.imu_avg_count = 0
+        self.distance = 0.0
         # Kalman filter variables
         # self.state_estimate
         # self.error_matrix
@@ -46,122 +47,113 @@ class OdometryNode(Node):
 
         # Complementary filter and deadband threshold tunable parameters
         self.yaw = 0.0
-        self.ACC_THRESHOLD = 0.1 
-        self.VEL_THRESHOLD = 0.1
+        self.ACC_THRESHOLD = 0.3 # to stop stationary noise 0.3
+        self.VEL_THRESHOLD = 0.1 # to stop stationary noise 0.3
         self.ANGVEL_THRESHOLD = 0.01
         self.MAX_IMU_BUFFER = 100
+        self.odometry_fudge_factor_x = 2.20
+        self.odometry_fudge_factor_y = 2.20
+        self.odometry_fudge_factor = np.array([self.odometry_fudge_factor_x, self.odometry_fudge_factor_y, 1.0])
         
 
         # list containing a list of position values and a yaw value
         # e.g. [[x, y, z], yaw]
         self.vehicle_state = [[0.0, 0.0, 0.0], 0.0]  # [position, yaw]
+        self.prev_imu_time = None
+
+        self.last_ang_vel = np.zeros(3)  # <-- Add this line
+        self.last_orientation = [0.0, 0.0, 0.0, 1.0]  # <-- Also initialize orientation for safety
 
     def imu_callback(self, msg):
-        # Buffer each incoming IMU message
-        self.imu_buffer.append(msg)
-        if len(self.imu_buffer) > self.MAX_IMU_BUFFER:
-            self.imu_buffer = self.imu_buffer[-self.MAX_IMU_BUFFER:]
-
-    def publish_data(self):
-        if not self.imu_buffer:
-            return  # No IMU data to process
-
-        # Average all buffered IMU messages
-        n = len(self.imu_buffer)
-        avg_acc = np.zeros(3)
-        avg_ang_vel = np.zeros(3)
-        avg_orientation = np.zeros(4)  # [x, y, z, w]
-        for imu in self.imu_buffer:
-            avg_acc += np.array([
-                imu.linear_acceleration.x,
-                imu.linear_acceleration.y,
-                imu.linear_acceleration.z
-            ])
-            avg_ang_vel += np.array([
-                imu.angular_velocity.x,
-                imu.angular_velocity.y,
-                imu.angular_velocity.z
-            ])
-            avg_orientation += np.array([
-                imu.orientation.x,
-                imu.orientation.y,
-                imu.orientation.z,
-                imu.orientation.w
-            ])
-        avg_acc /= n
-        avg_ang_vel /= n
-        avg_orientation /= n
-
-        # Apply deadband filtering
-        avg_acc = self.apply_deadband(avg_acc, self.ACC_THRESHOLD)
-        avg_ang_vel = self.apply_deadband(avg_ang_vel, self.ANGVEL_THRESHOLD)
-
-        # Use the timestamp of the last IMU message
-        imu = self.imu_buffer[-1]
-        current_time = imu.header.stamp.sec + imu.header.stamp.nanosec * 1e-9
-        if self.prev_time is None:
-            self.prev_time = current_time
-            self.imu_buffer.clear()
+        self.last_imu_msg = msg
+        # Get current time from IMU message
+        current_time = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
+        if self.prev_imu_time is None:
+            self.prev_imu_time = current_time
             # Initialize yaw from orientation
-            self.yaw = self.quaternion_to_yaw(avg_orientation)
+            self.yaw = self.quaternion_to_yaw([
+                msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w
+            ])
             return
 
-        dt = current_time - self.prev_time
-        self.prev_time = current_time
+        dt = current_time - self.prev_imu_time
+        self.prev_imu_time = current_time
 
-        # --- Complementary filter for yaw ---
-        alpha = 0.98  # blending factor, tune as needed (0.98 is common)
-        # Integrate gyro z (yaw rate)
-        gyro_yaw = self.yaw + avg_ang_vel[2] * dt
-        # Yaw from orientation quaternion
-        quat_yaw = self.quaternion_to_yaw(avg_orientation)
-        # Complementary filter
-        self.yaw = alpha * gyro_yaw + (1 - alpha) * quat_yaw
+        # Get acceleration and angular velocity as numpy arrays
+        acc = np.array([msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z])
+        ang_vel = np.array([msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z])
 
-        is_stationary = np.linalg.norm(avg_acc[:2]) < self.ACC_THRESHOLD and np.linalg.norm(avg_ang_vel[:2]) < self.ANGVEL_THRESHOLD
+        # Apply deadband
+        acc = self.apply_deadband(acc, self.ACC_THRESHOLD)
+        ang_vel = self.apply_deadband(ang_vel, self.ANGVEL_THRESHOLD)
+
+        # Integrate only if not stationary
+        is_stationary = np.linalg.norm(acc[:2]) < self.ACC_THRESHOLD
+        self.get_logger().info(f"IMU Data: Acc={np.linalg.norm(acc[:2])}, yaw= {self.yaw}, Stationary={is_stationary}")
 
         if is_stationary:
-            # Aggressively zero velocity
             self.velocity[:2] = 0
-            self.car_state_msg.vx = 0.0
-            self.car_state_msg.vy = 0.0
-            self.car_state_msg.velocity = 0.0
-            # Optionally, do NOT update position/yaw when stationary
-            # (comment out the lines that update self.position and self.yaw when is_stationary is True)
+            # Do NOT update position when stationary
         else:
-            # Only integrate when moving
-            self.velocity += avg_acc * dt
-            self.position += self.velocity * dt
-            # Complementary filter for yaw
-            gyro_yaw = self.yaw + avg_ang_vel[2] * dt
-            quat_yaw = self.quaternion_to_yaw(avg_orientation)
-            alpha = 0.98
-            self.yaw = alpha * gyro_yaw + (1 - alpha) * quat_yaw
-            self.car_state_msg.vx = self.clamp_small(self.velocity[0])
-            self.car_state_msg.vy = self.clamp_small(self.velocity[1])
-            self.car_state_msg.velocity = self.clamp_small(hypot(self.velocity[0], self.velocity[1]))
+            self.velocity += acc * dt
+            if self.velocity[0] < 0:
+                self.velocity[0] = 0.0  # No reverse
 
-        # Always publish the last position/yaw, but don't update them when stationary
+            # Transform velocity from robot frame to world frame using current yaw
+            v_world = np.zeros(3)
+            v_world[0] = self.velocity[0] * np.cos(self.yaw) - self.velocity[1] * np.sin(self.yaw)
+            v_world[1] = self.velocity[0] * np.sin(self.yaw) + self.velocity[1] * np.cos(self.yaw)
+            v_world[2] = self.velocity[2]
+
+            self.position += v_world * self.odometry_fudge_factor * dt
+            self.distance += hypot(self.velocity[0] * self.odometry_fudge_factor_x, self.velocity[1] * self.odometry_fudge_factor_y) * dt
+
+            # Complementary filter for yaw
+            alpha = 0.98
+            gyro_yaw = self.yaw + ang_vel[2] * dt
+            quat_yaw = self.quaternion_to_yaw([
+                msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w
+            ])
+            self.yaw = alpha * gyro_yaw + (1 - alpha) * quat_yaw
+
+        self.last_orientation = [
+            msg.orientation.x,
+            msg.orientation.y,
+            msg.orientation.z,
+            msg.orientation.w
+        ]
+        self.last_ang_vel = np.array([
+            msg.angular_velocity.x,
+            msg.angular_velocity.y,
+            msg.angular_velocity.z
+        ])
+
+    def publish_data(self):
+        # Just publish the current state
+        self.car_state_msg.vx = self.clamp_small(self.velocity[0])
+        self.car_state_msg.vy = self.clamp_small(self.velocity[1])
+        self.car_state_msg.velocity = self.clamp_small(hypot(self.velocity[0], self.velocity[1]))
         self.car_state_msg.x = self.position[0]
         self.car_state_msg.y = self.position[1]
         self.car_state_msg.yaw = self.yaw
-        self.car_state_msg.angular_velocity = avg_ang_vel[2]
-        self.car_state_msg.distance += hypot(self.velocity[0] * dt, self.velocity[1] * dt)
+        self.car_state_msg.angular_velocity = self.last_ang_vel[2]
+        self.car_state_msg.distance = self.distance
 
-        self.odom_msg.header.stamp = imu.header.stamp
+        if hasattr(self, 'last_imu_msg'):
+            self.odom_msg.header.stamp = self.last_imu_msg.header.stamp
         self.odom_msg.header.frame_id = 'odom'
         self.odom_msg.child_frame_id = 'base_link'
         self.odom_msg.pose.pose.position = Point(x=self.position[0], y=self.position[1], z=self.position[2])
-        self.odom_msg.pose.pose.orientation.x = avg_orientation[0]
-        self.odom_msg.pose.pose.orientation.y = avg_orientation[1]
-        self.odom_msg.pose.pose.orientation.z = avg_orientation[2]
-        self.odom_msg.pose.pose.orientation.w = avg_orientation[3]
+        self.odom_msg.pose.pose.orientation.x = self.last_orientation[0]
+        self.odom_msg.pose.pose.orientation.y = self.last_orientation[1]
+        self.odom_msg.pose.pose.orientation.z = self.last_orientation[2]
+        self.odom_msg.pose.pose.orientation.w = self.last_orientation[3]
         self.odom_msg.twist.twist.linear.x = self.velocity[0]
         self.odom_msg.twist.twist.linear.y = self.velocity[1]
         self.odom_msg.twist.twist.linear.z = self.velocity[2]
-        self.odom_msg.twist.twist.angular.x = avg_ang_vel[0]
-        self.odom_msg.twist.twist.angular.y = avg_ang_vel[1]
-        self.odom_msg.twist.twist.angular.z = avg_ang_vel[2]
+        self.odom_msg.twist.twist.angular.x = self.last_ang_vel[0]
+        self.odom_msg.twist.twist.angular.y = self.last_ang_vel[1]
+        self.odom_msg.twist.twist.angular.z = self.last_ang_vel[2]
 
         self.car_state_publisher.publish(self.car_state_msg)
         self.odom_publisher.publish(self.odom_msg)
