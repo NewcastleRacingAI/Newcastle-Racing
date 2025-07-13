@@ -89,7 +89,7 @@ class OdometryNode(Node):
 
         # Integrate only if not stationary
         is_stationary = np.linalg.norm(acc[:2]) < self.ACC_THRESHOLD
-        self.get_logger().info(f"IMU Data: Acc={np.linalg.norm(acc[:2])}, yaw= {self.yaw}, Stationary={is_stationary}")
+        #self.get_logger().info(f"IMU Data: Acc={np.linalg.norm(acc[:2])}, yaw= {self.yaw}, Stationary={is_stationary}")
 
         if is_stationary:
             self.velocity[:2] = 0

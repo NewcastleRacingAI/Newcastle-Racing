@@ -9,7 +9,7 @@ from math import atan2, radians
 from visualization_msgs.msg import Marker
 from std_msgs.msg import Header, ColorRGBA
 from geometry_msgs.msg import Point
-from newcastle_racing_ai_msgs.msg import MissionState, Mission
+from newcastle_racing_ai_msgs.msg import MissionState, Mission, NewCarState
 
 class PathPlanningDualCamVisualizationNode(Node):
     def __init__(self):
@@ -28,9 +28,10 @@ class PathPlanningDualCamVisualizationNode(Node):
         self.max_speed = 0.5
 
         # 初始化发布器与定时器
-        self.create_subscription(CarState, '/odometry_integration/car_state', self.car_state_callback, 10)
+        #self.create_subscription(CarState, '/odometry_integration/car_state', self.car_state_callback, 10)
+        self.create_subscription(NewCarState, '/car_state', self.car_state_callback, 10)
         self.create_subscription(ConeArrayWithCovariance, '/ground_truth/cones', self.cones_callback, 10)
-        self.create_subscription(Imu, '/camera/imu/data', self.imu_callback, 10)
+        #self.create_subscription(Imu, '/camera/imu/data', self.imu_callback, 10)
         self.create_subscription(Mission, '/mission', self._on_mission, 10)
         self.path_publisher = self.create_publisher(PathWithBoundaries, '/path', 10)
         self.marker_pub = self.create_publisher(Marker, '/visualization_marker', 1)
@@ -107,14 +108,16 @@ class PathPlanningDualCamVisualizationNode(Node):
         self.marker_pub.publish(marker)
 
 
-    def imu_callback(self, imu_msg):
-        _, _, yaw = quaternion_to_euler(imu_msg.orientation)
-        self.car_direction = np.array([np.cos(yaw), np.sin(yaw)])
-        self.check_and_compute_path()
+    # def imu_callback(self, imu_msg):
+    #     _, _, yaw = quaternion_to_euler(imu_msg.orientation)
+    #     self.car_direction = np.array([np.cos(yaw), np.sin(yaw)])
+    #     self.check_and_compute_path()
 
     def car_state_callback(self, msg):
-        position = msg.pose.pose.position
-        self.car_position = np.array([position.x, position.y])
+        # position = msg.pose.pose.position
+        # self.car_position = np.array([position.x, position.y])
+        self.car_position = np.array([msg.x, msg.y])
+        self.car_direction = np.array([np.cos(msg.yaw), np.sin(msg.yaw)])
         self.check_and_compute_path()
 
     def cones_callback(self, msg):

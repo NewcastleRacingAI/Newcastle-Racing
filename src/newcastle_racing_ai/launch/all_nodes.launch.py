@@ -34,12 +34,12 @@ def generate_launch_description():
         #     executable='mpcc_control_node',
         #     output='screen'
         # ),
-        # Node(
-        # package=PACKAGE_NAME,
-        # namespace=NAMESPACE,
-        # executable="controller",
-        # name="Controller",
-        # ),
+        Node(
+        package=PACKAGE_NAME,
+        namespace=NAMESPACE,
+        executable="controller",
+        name="Controller",
+        ),
         Node(
         package=PACKAGE_NAME,
         namespace=NAMESPACE,

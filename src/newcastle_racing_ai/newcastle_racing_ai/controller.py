@@ -9,7 +9,7 @@ from newcastle_racing_ai.utils.mpc_module import P, Node as MpcNode, PATH, calc_
 import math
 from math import atan2
 import numpy as np
-from newcastle_racing_ai_msgs.msg import MissionState
+from newcastle_racing_ai_msgs.msg import MissionState, NewCarState
 from .parameters import PARAMETERS
 
 class Controller(Node):
@@ -18,7 +18,8 @@ class Controller(Node):
         self.declare_parameters(namespace="", parameters=PARAMETERS)
         # --------- ROS subscriptions and publishers ---------
         self.create_subscription(PathWithBoundaries,  self.get_parameter("path_topic").value, self.on_path, 10)
-        self.create_subscription(CarState, self.get_parameter("car_state_topic").value, self.on_car_state, 10)
+        #self.create_subscription(CarState, self.get_parameter("car_state_topic").value, self.on_car_state, 10)
+        self.create_subscription(NewCarState, self.get_parameter("car_state_topic").value, self.on_car_state, 10)
         self.create_subscription(MissionState, self.get_parameter("mission_state_topic").value, self.on_state_command, 10)
         self.control_publisher = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
 
@@ -67,7 +68,7 @@ class Controller(Node):
 
     # --------- Callback: odometry/localization subscription ---------
     def on_car_state(self, msg):
-        self.car_state= msg
+        self.car_state = msg
         
     
     # --------- Main timer callback (core MPC loop) ---------
