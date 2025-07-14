@@ -51,6 +51,7 @@ class Mission_Control(Node):
         self.initial_time = None
         self.demo_state = 0
         self.drive_state = 0
+        self.distance = 0.0
         # for a quick start
         self.full_steam_ahead = AckermannDriveStamped()
         self.full_steam_ahead.drive.steering_angle = 0.0
@@ -89,7 +90,7 @@ class Mission_Control(Node):
     def _on_wheel_speeds(self, msg):
         self.wheel_speeds = msg
         self.average_wheel_speed = (msg.speeds.lf_speed + msg.speeds.rf_speed + msg.speeds.lb_speed + msg.speeds.rb_speed) / 4.0
-        self.get_logger().info('Received wheel speeds: %s' % self.average_wheel_speed)
+        #self.get_logger().info('Received wheel speeds: %s' % self.average_wheel_speed)
 
 
     def _on_state(self, msg):
@@ -134,8 +135,8 @@ class Mission_Control(Node):
                     self._publisher_cmd.publish(self.full_brake_stop)
                     self.can_reply = True
                     self._publisher_can_complete.publish(self.can_reply)
+
         # Static Mission B
-        # still need to find out how to get the rpm
         elif self.mission_type == Mission.AMI_DDT_INSPECTION_B:
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Starting inspection mission B...')
@@ -152,6 +153,7 @@ class Mission_Control(Node):
                     self.mission_state = MissionState.AS_EMERGENCY_BRAKE
                     self.call_ebs_service()
                     self.get_logger().info('Emergency brake applied, stopping the car...')
+
         # Demonstration Mission
         elif self.mission_type == Mission.AMI_AUTONOMOUS_DEMO:
             if self.mission_state == MissionState.AS_READY:
@@ -232,6 +234,7 @@ class Mission_Control(Node):
                         self.initial_odom = Odometry()
                         self.initial_time = None
                         self.demo_state = 0
+
         #acceleration mission
         elif self.mission_type == Mission.AMI_ACCELERATION:
             if self.mission_state == MissionState.AS_READY:
@@ -258,6 +261,7 @@ class Mission_Control(Node):
                             self._publisher_can_complete.publish(self.can_reply)
             elif self.mission_state == MissionState.AS_FINISHED:
                 self.get_logger().info('Mission Finished')
+
         # Skidpad mission
         elif self.mission_type == Mission.AMI_SKIDPAD:
             # figure of 8
@@ -293,10 +297,44 @@ class Mission_Control(Node):
                 self.get_logger().info('AMI_Skidpad is ready, starting driving...')
                 self._publisher_mission_state.publish(self.mission_state_msg)
                 self.drive_state = 1
+
+        # for static integration day testing only - no drive commands sent
         elif self.mission_type == Mission.AMI_ADS_INSPECTION:
-            pass
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Starting inspection mission A...')
+                self.initial_distance = self.distance
+                self.initial_time = self.get_clock().now()
+            if self.mission_state == MissionState.AS_DRIVING:
+                self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
+                self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
+                # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
+                if (self.get_clock().now() - self.initial_time) > Duration(seconds=10):
+                    self.can_reply = True
+                    self._publisher_can_complete.publish(self.can_reply)
+                    self.get_logger().info('Telling can mission complete...')
+            if self.mission_state == MissionState.AS_FINISHED:
+                self.get_logger().info('Mission Finished received from CAN')
+            if self.mission_state == MissionState.AS_EMERGENCY_BRAKE:
+                self.get_logger().info('EMERGENCY BRAKE received from CAN')
+
+        # for static integration day testing only - no drive commands sent
         elif self.mission_type == Mission.AMI_ADS_EBS:
-            pass
+            if self.mission_state == MissionState.AS_READY:
+                self.get_logger().info('Starting inspection mission A...')
+                self.initial_distance = self.distance
+                self.initial_time = self.get_clock().now()
+            elif self.mission_state == MissionState.AS_DRIVING:
+                self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
+                self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
+                # For 0-10 sim drive then call ebs
+                if (self.get_clock().now() - self.initial_time) > Duration(seconds=10):
+                    self.call_ebs_service()
+                    self.get_logger().info('Emergency brake applied, stopping the car...')
+                    self.get_logger().info('Telling can to deploy ebs...')
+            elif self.mission_state == MissionState.AS_FINISHED:
+                self.get_logger().info('Mission Finished received from CAN')
+            elif self.mission_state == MissionState.AS_EMERGENCY_BRAKE:
+                self.get_logger().info('EMERGENCY BRAKE received from CAN')
         elif self.mission_type == Mission.AMI_JOYSTICK:
             pass
         elif self.mission_type == Mission.AMI_MANUAL:

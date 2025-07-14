@@ -10,10 +10,10 @@ def generate_launch_description():
         parameters=[
             {"use_sim_time": True},
             {"can_debug": 0},
-            {"simulate_can": 1},
+            {"simulate_can": 0},
             {"can_interface": "vcan0"},
             {"loop_rate": 100},
-            {"rpm_limit": 100},
+            {"rpm_limit": 100.0},
             {"max_acc": 5.0},
             {"max_braking": 5.0},
             {"cmd_timeout": 0.5}
