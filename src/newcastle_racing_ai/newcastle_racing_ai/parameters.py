@@ -9,10 +9,13 @@ PARAMETERS = (
     ("odom_topic", "/odom"),#live = /odom,
     ("gt_car_state_topic", "/odometry_integration/car_state"),
     ("car_state_topic", "/car_state"),
-    ("can_state_topic","/ros_can/state"),
-    ("ebs_topic", "/ebs"),
-    ("mission_topic", "/mission"),
-    ("mission_state_topic", "/mission_state"),
+    ("can_state_topic","/ros_can/state"), # from ros_can
+    ("can_wheel_speed_topic", "ros_can/wheel_speeds"), # from ros_can
+    ("ebs_topic", "/ebs"), # our internal ebs topic
+    ("can_ebs_request_service", "/ros_can/ebs"), # for an internal ebs request to the CAN node
+    ("can_mission_complete_topic", "/ros_can/mission_completed"), # for an internal mission complete topic to the CAN node
+    ("mission_topic", "/mission"), # our internal mission topic
+    ("mission_state_topic", "/mission_state"), # our internal mission state topic
     # CONFIGURATION
     ("time_step", 0.0),
     # determines the camera fps that the perception node will run at

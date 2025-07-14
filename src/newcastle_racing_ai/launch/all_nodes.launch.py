@@ -8,7 +8,7 @@ PACKAGE_NAME = "newcastle_racing_ai"
 NAMESPACE = "nrfai"
 
 def generate_launch_description():
-    workspace_dir = os.getenv('WORKSPACE_DIR', '/workspace')
+    workspace_dir = os.getenv('WORKSPACE_DIR', '/home/newcastleracing/')
 
     return LaunchDescription([
         # ros2 launch eufs_launcher eufs_launcher.launch.py
@@ -65,9 +65,9 @@ def generate_launch_description():
         #     )
         # ),
         #launch ros_can
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(
-        #         os.path.join(workspace_dir, 'ros_can/launch/ros_can.launch.py')
-        #     )
-        #)
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                '/home/newcastleracing/Projects/Newcastle-Racing/src/ros_can/launch/ros_can.launch.py'
+            )
+        )
     ])

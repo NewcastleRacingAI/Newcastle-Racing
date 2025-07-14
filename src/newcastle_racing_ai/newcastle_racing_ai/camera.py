@@ -7,6 +7,7 @@ import pandas as pd
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 from PIL import Image as PILImage
 import numpy as np
+import pyzed.sl as sl
 
 
 
@@ -27,27 +28,28 @@ class Camera(Node):
         self.image = Image()
         self.depth = Image()
         self._img_counter = 0
+        self.root = "/home/newcastleracing/Projects/Newcastle-Racing/src"
 
+        # If using a real camera, uncomment the following lines to initialize the ZED camera
+        #Set up camera
+        self.zed = sl.Camera()
 
-        # Set up camera
-        # self.zed = sl.Camera()
+        # Set configuration parameters
+        init_params = sl.InitParameters()
+        init_params.coordinate_units = sl.UNIT.METER
+        init_params.camera_resolution = sl.RESOLUTION.HD720
+        init_params.camera_fps = 30
 
-        # # Set configuration parameters
-        # init_params = sl.InitParameters()
-        # init_params.coordinate_units = sl.UNIT.METER
-        # init_params.camera_resolution = sl.RESOLUTION.HD720
-        # init_params.camera_fps = 30
+        # Open the camera
+        err = self.zed.open(init_params)
+        if err != sl.ERROR_CODE.SUCCESS:
+            print(repr(err))
+            exit(-1)
 
-        # # Open the camera
-        # err = self.zed.open(init_params)
-        # if err != sl.ERROR_CODE.SUCCESS:
-        #     print(repr(err))
-        #     exit(-1)
-
-        # self.runtime_param = sl.RuntimeParameters()
-        # self.image = sl.Mat()
-        # self.point_cloud = sl.Mat()
-        # self.depth_measure = sl.Mat()
+        self.runtime_param = sl.RuntimeParameters()
+        self.image = sl.Mat()
+        self.point_cloud = sl.Mat()
+        self.depth_measure = sl.Mat()
 
     
     def _on_depth_camera(self, msg):
@@ -75,12 +77,15 @@ class Camera(Node):
     def grab_frame(self):
         if self.zed.grab(self.runtime_param) == sl.ERROR_CODE.SUCCESS:
             self.zed.retrieve_image(self.image, sl.VIEW.LEFT)
-            self.zed.retrieve_measure(self.point_cloud, sl.MEASURE.XYZRGBA)
-            self.zed.retrieve_measure(self.depth_measure, sl.MEASURE.DEPTH)
+            self.zed.retrieve_image(self.depth, sl.VIEW.DEPTH)
+            #self.zed.retrieve_measure(self.point_cloud, sl.MEASURE.XYZRGBA)
+            #self.zed.retrieve_measure(self.depth_measure, sl.MEASURE.DEPTH)
                 
 
-    def save_image_jpeg(self, msg, type, filename="/workspace/newcastle_racing_ai/imgs/image-{}{}.jpg"):
+    def save_image_jpeg(self, msg, type, filename=None):
         # Save both color and depth images as JPEG (depth will be normalized to 8-bit)
+        if filename is None:
+            filename = os.path.join(self.root, "/newcastle_racing_ai/imgs/image_{}_{}.jpg")
         self.get_logger().info("Saving image in JPEG format.")
         # Check that the path to the image directory exists
         if not os.path.exists(os.path.dirname(filename.format(self._img_counter, type))):
