@@ -134,7 +134,7 @@ class Mission_Control(Node):
                     #self.can_reply.as_state = self.mission_state
                     #self.can_reply.ami_state = self.mission_type
                     self._publisher_cmd.publish(self.full_brake_stop)
-                    self.can_reply = True
+                    self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
 
         # Static Mission B
@@ -218,7 +218,7 @@ class Mission_Control(Node):
                             elif self.vehicle_state[2] < 0.1:
                                 if self.demo_state == 5:
                                     self.mission_state_msg.mission_state = MissionState.AS_FINISHED
-                                    self.can_reply = True
+                                    self.can_reply.data = True
                                     self._publisher_can_complete.publish(self.can_reply)
                                     self._publisher_mission_state.publish(self.mission_state_msg)
                                     #reset the distance travelled
@@ -226,11 +226,6 @@ class Mission_Control(Node):
                                     self.demo_state = 6
                     elif self.demo_state == 6:
                         self.get_logger().info('Demonstration mission finished, resetting state machine...')
-                        self.mission_state = MissionState.AS_FINISHED
-                        self.mission_state_msg.mission_state = self.mission_state
-                        self.can_reply = True
-                        self._publisher_can_complete.publish(self.can_reply)
-                        self._publisher_mission_state.publish(self.mission_state_msg)
                         # reset the initial odom and time
                         self.initial_odom = Odometry()
                         self.initial_time = None
@@ -262,6 +257,8 @@ class Mission_Control(Node):
                             self._publisher_can_complete.publish(self.can_reply)
             elif self.mission_state == MissionState.AS_FINISHED:
                 self.get_logger().info('Mission Finished')
+                self.can_reply.data = True
+                self._publisher_can_complete.publish(self.can_reply)
 
         # Skidpad mission
         elif self.mission_type == Mission.AMI_SKIDPAD:
@@ -309,7 +306,7 @@ class Mission_Control(Node):
                 self.get_logger().info('_AMI_ADS_INSPECTION is ready, starting driving...')
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
                 # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
-                if (self.get_clock().now() - self.initial_time) > Duration(seconds=2):
+                if (self.get_clock().now() - self.initial_time) > Duration(seconds=5):
                     self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
                     self.get_logger().info('Telling can mission complete...')
@@ -328,14 +325,16 @@ class Mission_Control(Node):
                 self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
                 # For 0-10 sim drive then call ebs
-                if (self.get_clock().now() - self.initial_time) > Duration(seconds=10):
-                    self.call_ebs_service()
+                if (self.get_clock().now() - self.initial_time) > Duration(seconds=5):
                     self.get_logger().info('Emergency brake applied, stopping the car...')
                     self.get_logger().info('Telling can to deploy ebs...')
+                    self.call_ebs_service()
             elif self.mission_state == MissionState.AS_FINISHED:
                 self.get_logger().info('Mission Finished received from CAN')
             elif self.mission_state == MissionState.AS_EMERGENCY_BRAKE:
                 self.get_logger().info('EMERGENCY BRAKE received from CAN')
+
+        # not implemented yet
         elif self.mission_type == Mission.AMI_JOYSTICK:
             pass
         elif self.mission_type == Mission.AMI_MANUAL:

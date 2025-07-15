@@ -17,13 +17,21 @@ AMI_ADS_EBS
 ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 1, ami_state: 17}"
 ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 2, ami_state: 17}"
 
+should trigger ebs
 
-Demo
-# Set mission and ready
+
+### The Following Will Send Drive Commands
+
+
+# AMI_DDT_INSPECTION_A - drive wheels to 200rpm
 ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 1, ami_state: 18}"
 ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 2, ami_state: 18}"
 
-should change to mission completed from can
+# AMI_DDT_INSPECTION_B - drive wheels to 200rpm
+ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 1, ami_state: 19}"
+ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 2, ami_state: 19}"
+
+
 
 
 
