@@ -17,6 +17,12 @@ AMI_ADS_EBS
 ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 1, ami_state: 17}"
 ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 2, ami_state: 17}"
 
+
+Demo
+# Set mission and ready
+ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 1, ami_state: 18}"
+ros2 topic pub /ros_can/state eufs_msgs/msg/CanState "{as_state: 2, ami_state: 18}"
+
 should change to mission completed from can
 
 

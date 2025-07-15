@@ -42,7 +42,8 @@ class Mission_Control(Node):
         self.mission_type = Mission.AMI_NOT_SELECTED
         self.mission_state_msg = MissionState()
         self.mission_msg = Mission()
-        self.can_reply = False # was can_state
+        self.can_reply = Bool()
+        self.can_reply.data = False # was can_state
         self.odom = Odometry()
         self.wheel_speeds = WheelSpeedsStamped()
         self.average_wheel_speed = 0.0
@@ -257,7 +258,7 @@ class Mission_Control(Node):
                     elif self.vehicle_state[2] < 0.1:
                             self.mission_state_msg.mission_state = MissionState.AS_FINISHED
                             self._publisher_mission_state.publish(self.mission_state_msg)
-                            self.can_reply = True
+                            self.can_reply.data = True
                             self._publisher_can_complete.publish(self.can_reply)
             elif self.mission_state == MissionState.AS_FINISHED:
                 self.get_logger().info('Mission Finished')
@@ -305,11 +306,11 @@ class Mission_Control(Node):
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
             if self.mission_state == MissionState.AS_DRIVING:
-                self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
+                self.get_logger().info('_AMI_ADS_INSPECTION is ready, starting driving...')
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
                 # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
-                if (self.get_clock().now() - self.initial_time) > Duration(seconds=10):
-                    self.can_reply = True
+                if (self.get_clock().now() - self.initial_time) > Duration(seconds=2):
+                    self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
                     self.get_logger().info('Telling can mission complete...')
             if self.mission_state == MissionState.AS_FINISHED:
