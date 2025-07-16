@@ -25,6 +25,7 @@ class Mission_Control(Node):
         #self._subscription = self.create_subscription(Odometry, self.get_parameter("odom_topic").value, self._on_odom, 10)
         self._subscription = self.create_subscription(CanState, self.get_parameter("can_state_topic").value, self._on_state, 10)
         self._subscription = self.create_subscription(NewCarState, self.get_parameter("car_state_topic").get_parameter_value().string_value, self._on_car_state, 10)
+        self._can_drive_publisher = self.create_publisher(Bool, self.get_parameter("can_driving_flag_topic").get_parameter_value().string_value, 10)
         # to be sent to controller
         self._publisher_mission = self.create_publisher(Mission, self.get_parameter("mission_topic").value, 10)
         self._publisher_mission_state = self.create_publisher(MissionState, self.get_parameter("mission_state_topic").value, 10)
@@ -82,7 +83,7 @@ class Mission_Control(Node):
         """        
         req = Trigger.Request()
         future = self.cli.call_async(req)
-        rclpy.task.spin_until_future_complete(self, future)
+        rclpy.spin_until_future_complete(self, future)
         if future.result() is not None:
             self.get_logger().info(f"EBS Service response: success={future.result().success}, message={future.result().message}")
         else:
@@ -124,17 +125,18 @@ class Mission_Control(Node):
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
             if self.mission_state == MissionState.AS_DRIVING:
+                self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
                 # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 200:
-                    #self._publisher_cmd.publish(self.full_steam_ahead)
+                    self._publisher_cmd.publish(self.full_steam_ahead)
                     pass
                 else:
                     self.mission_state = MissionState.AS_FINISHED
                     #self.can_reply.as_state = self.mission_state
                     #self.can_reply.ami_state = self.mission_type
-                    #self._publisher_cmd.publish(self.full_brake_stop)
+                    self._publisher_cmd.publish(self.full_brake_stop)
                     self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
 
@@ -145,12 +147,13 @@ class Mission_Control(Node):
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
             if self.mission_state == MissionState.AS_DRIVING:
+                self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_DDT_INSPECTION_B is ready, starting driving...')
                 elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
                 self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 # For 0-10 s drive full steam ahead, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 50:
-                    #self._publisher_cmd.publish(self.full_steam_ahead)
+                    self._publisher_cmd.publish(self.full_steam_ahead)
                     pass
                 else:
                     self.mission_state = MissionState.AS_EMERGENCY_BRAKE
@@ -163,6 +166,7 @@ class Mission_Control(Node):
                 self.get_logger().info('Starting Demonstration Mission...')
                 self.initial_time = self.get_clock().now()
             if self.mission_state == MissionState.AS_DRIVING:
+                self._can_drive_publisher.publish(Bool(data=True))
                 elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
                 self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 self.get_logger().info('AMI_Autonomous_Demo is ready, starting driving...')
@@ -240,6 +244,7 @@ class Mission_Control(Node):
                 self.initial_time = self.get_clock().now()
                 self.initial_distance = self.distance
             elif self.mission_state == MissionState.AS_DRIVING:
+                self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_Acceleration is ready, starting driving...')
                 elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
                 self.get_logger().info('Time = %.2f seconds' % elapsed_time)
@@ -272,6 +277,7 @@ class Mission_Control(Node):
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Ready for Skidpad Mission...')
             elif self.mission_state == MissionState.AS_DRIVING and self.drive_state == 0:
+                self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_Skidpad is ready, starting driving...')
                 self._publisher_mission_state.publish(self.mission_state_msg)
                 self.drive_state = 1
@@ -294,6 +300,7 @@ class Mission_Control(Node):
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Ready for Skidpad Mission...')
             elif self.mission_state == MissionState.AS_DRIVING and self.drive_state == 0:
+                self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_Skidpad is ready, starting driving...')
                 self._publisher_mission_state.publish(self.mission_state_msg)
                 self.drive_state = 1
@@ -305,6 +312,7 @@ class Mission_Control(Node):
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
             if self.mission_state == MissionState.AS_DRIVING:
+                self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('_AMI_ADS_INSPECTION is ready, starting driving...')
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
                 # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
@@ -324,6 +332,7 @@ class Mission_Control(Node):
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
             elif self.mission_state == MissionState.AS_DRIVING:
+                self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
                 # For 0-10 sim drive then call ebs
