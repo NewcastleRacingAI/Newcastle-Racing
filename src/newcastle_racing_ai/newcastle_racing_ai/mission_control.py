@@ -57,18 +57,15 @@ class Mission_Control(Node):
         # for a quick start
         self.full_steam_ahead = AckermannDriveStamped()
         self.full_steam_ahead.drive.steering_angle = 0.0
-        self.full_steam_ahead.drive.acceleration = 20.0
-        self.full_steam_ahead.drive.speed = 15.0
+        self.full_steam_ahead.drive.acceleration = 0.1
         # for quick brake stop
         self.full_brake_stop = AckermannDriveStamped()
         self.full_brake_stop.drive.steering_angle = 0.0
         self.full_brake_stop.drive.acceleration = -10.0
-        #self.full_brake_stop.drive.speed = 0.0
         # for demonstration mission
         self.steering = AckermannDriveStamped()
         self.steering.drive.steering_angle = 0.0
         self.steering.drive.steering_angle_velocity = 0.01
-        #self.steering.drive.speed = 0.0
         self.steering.drive.acceleration = 0.0
       
     # --------- Callback: odometry/localization subscription ---------
@@ -131,10 +128,13 @@ class Mission_Control(Node):
                 # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 200:
                     self._publisher_cmd.publish(self.full_steam_ahead)
-                else:
+                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed > 200:
                     self.mission_state = MissionState.AS_FINISHED
+                    self.full_steam_ahead.drive.acceleration = 0.5
+                    self._publisher_cmd.publish(self.full_steam_ahead)
                     #self.can_reply.as_state = self.mission_state
                     #self.can_reply.ami_state = self.mission_type
+                else:
                     self._publisher_cmd.publish(self.full_brake_stop)
                     self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
@@ -153,6 +153,12 @@ class Mission_Control(Node):
                 # For 0-10 s drive full steam ahead, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 50:
                     self._publisher_cmd.publish(self.full_steam_ahead)
+                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed > 50:
+                    self.mission_state = MissionState.AS_FINISHED
+                    self.full_steam_ahead.drive.acceleration = 0.5
+                    self._publisher_cmd.publish(self.full_steam_ahead)
+                    #self.can_reply.as_state = self.mission_state
+                    #self.can_reply.ami_state = self.mission_type
                 else:
                     self.mission_state = MissionState.AS_EMERGENCY_BRAKE
                     self.call_ebs_service()
