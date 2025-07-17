@@ -36,7 +36,7 @@ class Mission_Control(Node):
             self.get_logger().info('Waiting for ros_can ebs service...')
         self._publisher_can_complete = self.create_publisher(Bool, self.get_parameter("can_mission_complete_topic").value, 10)
         self._publisher_cmd = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
-        self._timer = self.create_timer(0.1, self.mission)  # 10 Hz
+        self._timer = self.create_timer(0.05, self.mission)  # 10 Hz
 
         # mission variables
         self.mission_state = MissionState.AS_OFF
@@ -57,18 +57,18 @@ class Mission_Control(Node):
         # for a quick start
         self.full_steam_ahead = AckermannDriveStamped()
         self.full_steam_ahead.drive.steering_angle = 0.0
-        self.full_steam_ahead.drive.acceleration = 10.0
-        self.full_steam_ahead.drive.speed = 1.0
+        self.full_steam_ahead.drive.acceleration = 20.0
+        self.full_steam_ahead.drive.speed = 15.0
         # for quick brake stop
         self.full_brake_stop = AckermannDriveStamped()
         self.full_brake_stop.drive.steering_angle = 0.0
         self.full_brake_stop.drive.acceleration = -10.0
-        self.full_brake_stop.drive.speed = 0.0
+        #self.full_brake_stop.drive.speed = 0.0
         # for demonstration mission
         self.steering = AckermannDriveStamped()
         self.steering.drive.steering_angle = 0.0
         self.steering.drive.steering_angle_velocity = 0.01
-        self.steering.drive.speed = 0.0
+        #self.steering.drive.speed = 0.0
         self.steering.drive.acceleration = 0.0
       
     # --------- Callback: odometry/localization subscription ---------
@@ -92,7 +92,7 @@ class Mission_Control(Node):
     def _on_wheel_speeds(self, msg):
         self.wheel_speeds = msg
         self.average_wheel_speed = (msg.speeds.lf_speed + msg.speeds.rf_speed + msg.speeds.lb_speed + msg.speeds.rb_speed) / 4.0
-        #self.get_logger().info('Received wheel speeds: %s' % self.average_wheel_speed)
+        self.get_logger().info(f'Received wheel speeds: {msg.speeds.lf_speed}, {msg.speeds.rf_speed}, {msg.speeds.lb_speed}, {msg.speeds.rb_speed}')
 
 
     def _on_state(self, msg):
@@ -131,7 +131,6 @@ class Mission_Control(Node):
                 # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 200:
                     self._publisher_cmd.publish(self.full_steam_ahead)
-                    pass
                 else:
                     self.mission_state = MissionState.AS_FINISHED
                     #self.can_reply.as_state = self.mission_state
@@ -154,7 +153,6 @@ class Mission_Control(Node):
                 # For 0-10 s drive full steam ahead, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 50:
                     self._publisher_cmd.publish(self.full_steam_ahead)
-                    pass
                 else:
                     self.mission_state = MissionState.AS_EMERGENCY_BRAKE
                     self.call_ebs_service()

@@ -10,7 +10,7 @@ PARAMETERS = (
     ("gt_car_state_topic", "/odometry_integration/car_state"),
     ("car_state_topic", "/car_state"),
     ("can_state_topic","/ros_can/state"), # from ros_can
-    ("can_wheel_speed_topic", "ros_can/wheel_speeds"), # from ros_can
+    ("can_wheel_speed_topic", "/ros_can/wheel_speeds"), # from ros_can
     ("ebs_topic", "/ebs"), # our internal ebs topic
     ("can_driving_flag_topic", "/state_machine/driving_flag"), # from ros_can
     ("can_ebs_request_service", "/ros_can/ebs"), # for an internal ebs request to the CAN node

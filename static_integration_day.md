@@ -5,7 +5,7 @@ ros2 launch ros_can ros_can.launch.py
 ros2 launch ros_can ros_can.launch.py
 ros2 run newcastle_racing_ai mission_control
  or can use launch file in startup script:
- ros2 launch newcastle_racing_ai static_integration.launch.py
+ros2 launch newcastle_racing_ai static_integration.launch.py
 
 AMI_ADS_INSPECTION
 # Set mission and ready

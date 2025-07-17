@@ -368,7 +368,8 @@ eufs_msgs::msg::CanState CanInterface::makeStateMessage(const fs_ai_api_vcu2ai_s
     case fs_ai_api_as_state_e::AS_DRIVING:
       msg.as_state = eufs_msgs::msg::CanState::AS_DRIVING;
       break;
-    case fs_ai_api_as_state_e::AS_EMERGENCY_BRAKE:
+    case fs_ai_api_as_state_e::
+    _BRAKE:
       msg.as_state = eufs_msgs::msg::CanState::AS_EMERGENCY_BRAKE;
       break;
     case fs_ai_api_as_state_e::AS_FINISHED:
