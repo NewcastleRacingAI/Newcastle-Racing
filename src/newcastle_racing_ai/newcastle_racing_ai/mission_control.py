@@ -36,8 +36,8 @@ class Mission_Control(Node):
             self.get_logger().info('Waiting for ros_can ebs service...')
         self._publisher_can_complete = self.create_publisher(Bool, self.get_parameter("can_mission_complete_topic").value, 10)
         self._publisher_cmd = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
-        self.dt = 0.05
-        self._timer = self.create_timer(self.dt, self.mission)  # 10 Hz
+        self.dt = 0.05 # used for mission control timer and pid control
+        self._timer = self.create_timer(self.dt, self.mission)  
 
         # mission variables
         self.mission_state = MissionState.AS_OFF
@@ -138,6 +138,7 @@ class Mission_Control(Node):
         control_cmd.drive.steering_angle = 0.0
 
         self._publisher_cmd.publish(control_cmd)
+        self.get_logger().info(f'Control command: acceleration={control_cmd.drive.acceleration}')
 
         self.previous_error = error
 
@@ -209,6 +210,7 @@ class Mission_Control(Node):
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Starting Demonstration Mission...')
                 self.initial_time = self.get_clock().now()
+                self.target_rpm = 100
             if self.mission_state == MissionState.AS_DRIVING:
                 self._can_drive_publisher.publish(Bool(data=True))
                 elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
@@ -243,8 +245,10 @@ class Mission_Control(Node):
                         # tell controller to take over the driving
                         self.get_logger().info('------Starting driving-------')
                         self._publisher_mission_state.publish(self.mission_state_msg)
+                        self.speed_control()
                         self.demo_state = 4
                     elif self.demo_state == 4:
+                        self.speed_control()
                         #checking to see if travelled  first 10m
                         if self.total_distance > 10 and self.total_distance < 20:
                             if self.vehicle_state[2] > 0.1:
