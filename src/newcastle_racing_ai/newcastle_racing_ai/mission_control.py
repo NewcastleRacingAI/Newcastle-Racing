@@ -36,7 +36,8 @@ class Mission_Control(Node):
             self.get_logger().info('Waiting for ros_can ebs service...')
         self._publisher_can_complete = self.create_publisher(Bool, self.get_parameter("can_mission_complete_topic").value, 10)
         self._publisher_cmd = self.create_publisher(AckermannDriveStamped, "/cmd", 10)
-        self._timer = self.create_timer(0.05, self.mission)  # 10 Hz
+        self.dt = 0.05
+        self._timer = self.create_timer(self.dt, self.mission)  # 10 Hz
 
         # mission variables
         self.mission_state = MissionState.AS_OFF
@@ -67,6 +68,19 @@ class Mission_Control(Node):
         self.steering.drive.steering_angle = 0.0
         self.steering.drive.steering_angle_velocity = 0.01
         self.steering.drive.acceleration = 0.0
+        # for pid control for simple static integration mission:
+        # PID coefficients
+        self.Kp = 0.01
+        self.Ki = 0.001
+        self.Kd = 0.0005
+        self.target_rpm_a = 200
+        self.target_rpm_b = 50
+        self.target_rpm = self.target_rpm_a
+        self.wheel_count = 0
+        self.previous_error = 0.0
+        self.integral = 0.0
+        self.wheel_count = 2 # set this as during static the two front wheels were disconnected
+
       
     # --------- Callback: odometry/localization subscription ---------
     def _on_car_state(self, msg):
@@ -88,9 +102,44 @@ class Mission_Control(Node):
 
     def _on_wheel_speeds(self, msg):
         self.wheel_speeds = msg
-        self.average_wheel_speed = (msg.speeds.lf_speed + msg.speeds.rf_speed + msg.speeds.lb_speed + msg.speeds.rb_speed) / 4.0
+        self.average_wheel_speed = (msg.speeds.lf_speed + msg.speeds.rf_speed + msg.speeds.lb_speed + msg.speeds.rb_speed) / self.wheel_count
         self.get_logger().info(f'Received wheel speeds: {msg.speeds.lf_speed}, {msg.speeds.rf_speed}, {msg.speeds.lb_speed}, {msg.speeds.rb_speed}')
 
+            
+    
+    def speed_control(self):
+
+        # Simple PID control for wheel speed
+        # Calculate error
+        error = self.target_rpm - self.average_wheel_speed
+        
+        # Proportional term
+        P_out = self.Kp * error
+        
+        # Integral term
+        self.integral += error * self.dt
+        I_out = self.Ki * self.integral
+        
+        # Derivative term
+        derivative = (error - self.previous_error) / self.dt
+        D_out = self.Kd * derivative
+        
+        # Compute total output
+        output = P_out + I_out + D_out
+        
+        # Update previous error
+        self.previous_error = error
+        # Clamp acceleration to reasonable values
+        # acceleration = max(min(output, 1.0), -10.0)
+        acceleration = output * 0.005
+
+        control_cmd = AckermannDriveStamped()
+        control_cmd.drive.acceleration = acceleration
+        control_cmd.drive.steering_angle = 0.0
+
+        self._publisher_cmd.publish(control_cmd)
+
+        self.previous_error = error
 
     def _on_state(self, msg):
         #self.get_logger().info('Received: "%s"' % type(msg))
@@ -121,20 +170,16 @@ class Mission_Control(Node):
                 self.get_logger().info('Starting inspection mission A...')
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
+                self.target_rpm = self.target_rpm_a
             if self.mission_state == MissionState.AS_DRIVING:
                 self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
                 # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
-                if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 200:
-                    self._publisher_cmd.publish(self.full_steam_ahead)
-                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed > 200:
-                    self.mission_state = MissionState.AS_FINISHED
-                    self.full_steam_ahead.drive.acceleration = 0.5
-                    self._publisher_cmd.publish(self.full_steam_ahead)
-                    #self.can_reply.as_state = self.mission_state
-                    #self.can_reply.ami_state = self.mission_type
+                if (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
+                    self.speed_control()
                 else:
+                    self.mission_state = MissionState.AS_FINISHED
                     self._publisher_cmd.publish(self.full_brake_stop)
                     self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
@@ -145,20 +190,15 @@ class Mission_Control(Node):
                 self.get_logger().info('Starting inspection mission B...')
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
+                self.target_rpm = self.target_rpm_b
             if self.mission_state == MissionState.AS_DRIVING:
                 self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_DDT_INSPECTION_B is ready, starting driving...')
                 elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
                 self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 # For 0-10 s drive full steam ahead, for >10s apply brake stop
-                if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 50:
-                    self._publisher_cmd.publish(self.full_steam_ahead)
-                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed > 50:
-                    self.mission_state = MissionState.AS_FINISHED
-                    self.full_steam_ahead.drive.acceleration = 0.5
-                    self._publisher_cmd.publish(self.full_steam_ahead)
-                    #self.can_reply.as_state = self.mission_state
-                    #self.can_reply.ami_state = self.mission_type
+                if (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
+                    self.speed_control()
                 else:
                     self.mission_state = MissionState.AS_EMERGENCY_BRAKE
                     self.call_ebs_service()
