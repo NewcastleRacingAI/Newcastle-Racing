@@ -128,12 +128,13 @@ class Mission_Control(Node):
                 self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
                 # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 200:
-                    self._publisher_cmd.publish(self.full_steam_ahead)
+                    #self._publisher_cmd.publish(self.full_steam_ahead)
+                    pass
                 else:
                     self.mission_state = MissionState.AS_FINISHED
                     #self.can_reply.as_state = self.mission_state
                     #self.can_reply.ami_state = self.mission_type
-                    self._publisher_cmd.publish(self.full_brake_stop)
+                    #self._publisher_cmd.publish(self.full_brake_stop)
                     self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
 
@@ -149,7 +150,8 @@ class Mission_Control(Node):
                 self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 # For 0-10 s drive full steam ahead, for >10s apply brake stop
                 if (self.get_clock().now() - self.initial_time) < Duration(seconds=10) and self.average_wheel_speed <= 50:
-                    self._publisher_cmd.publish(self.full_steam_ahead)
+                    #self._publisher_cmd.publish(self.full_steam_ahead)
+                    pass
                 else:
                     self.mission_state = MissionState.AS_EMERGENCY_BRAKE
                     self.call_ebs_service()

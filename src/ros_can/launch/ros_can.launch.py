@@ -8,17 +8,17 @@ def generate_launch_description():
         executable="ros_can_node",
         name="ros_can",
         parameters=[
-            {"use_sim_time": True},
-            {"can_debug": 0},
+            {"use_sim_time": False},
+            {"can_debug": 1},
             {"simulate_can": 0},
-            {"can_interface": "vcan0"},
+            {"can_interface": "can0"},
             {"loop_rate": 100},
             {"rpm_limit": 100.0},
             {"max_acc": 5.0},
             {"max_braking": 5.0},
             {"cmd_timeout": 0.5}
         ],
-        # arguments=['--ros-args', '--log-level', 'debug'],
+        arguments=['--ros-args', '--log-level', 'debug'],
     )
 
     ld = LaunchDescription()
