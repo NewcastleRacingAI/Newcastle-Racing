@@ -70,7 +70,7 @@ class Mission_Control(Node):
         self.steering.drive.acceleration = 0.0
         # for pid control for simple static integration mission:
         # PID coefficients
-        self.Kp = 0.01
+        self.Kp = 0.1
         self.Ki = 0.001
         self.Kd = 0.0005
         self.target_rpm_a = 200
@@ -104,6 +104,7 @@ class Mission_Control(Node):
         self.wheel_speeds = msg
         self.average_wheel_speed = (msg.speeds.lf_speed + msg.speeds.rf_speed + msg.speeds.lb_speed + msg.speeds.rb_speed) / self.wheel_count
         self.get_logger().info(f'Received wheel speeds: {msg.speeds.lf_speed}, {msg.speeds.rf_speed}, {msg.speeds.lb_speed}, {msg.speeds.rb_speed}')
+        self.get_logger().info(f'Average Wheel Speed {self.average_wheel_speed}')
 
             
     
@@ -131,7 +132,7 @@ class Mission_Control(Node):
         self.previous_error = error
         # Clamp acceleration to reasonable values
         # acceleration = max(min(output, 1.0), -10.0)
-        acceleration = output * 0.005
+        acceleration = output * 0.01
 
         control_cmd = AckermannDriveStamped()
         control_cmd.drive.acceleration = acceleration
@@ -169,25 +170,50 @@ class Mission_Control(Node):
         elif self.mission_type == Mission.AMI_DDT_INSPECTION_A:
             if self.mission_state == MissionState.AS_READY:
                 self.get_logger().info('Starting inspection mission A...')
+                self.Kp = 0.1
+                self.Ki = 0.001
+                self.Kd = 0.0005
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
                 self.target_rpm = self.target_rpm_a
             if self.mission_state == MissionState.AS_DRIVING:
                 self._can_drive_publisher.publish(Bool(data=True))
                 self.get_logger().info('AMI_DDT_INSPECTION_A is ready, starting driving...')
-                self.get_logger().info('Time = %s' % (self.get_clock().now() - self.initial_time))
-                # For 0-10 s drive full steam ahead until 200rpm reached, for >10s apply brake stop
-                if (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
+                elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
+                self.get_logger().info('Time = %.2f seconds' % elapsed_time)
+                # turn left for 10s
+                if (self.get_clock().now() - self.initial_time) < Duration(seconds=5):
+                    # demo states progress after cmd sent, so cmd is only sent once per state
+                    self.get_logger().info('-------Turning left------')
+                    self.steering.drive.steering_angle = 1.0
+                    self._publisher_cmd.publish(self.steering)
+                # turn right for 10s
+                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
+                    self.get_logger().info('--------Turning right --------')
+                    self.steering.drive.steering_angle = -1.0
+                    self._publisher_cmd.publish(self.steering)
+                #turn straight for 10s
+                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=15):
+                    self.get_logger().info('------Turning straight-------')
+                    self.steering.drive.steering_angle = 0.0
+                    self._publisher_cmd.publish(self.steering)
+                elif (self.get_clock().now() - self.initial_time) < Duration(seconds=25):
+                # For 20-30s drive full steam ahead until 200rpm reached, for >10s apply brake stop
                     self.speed_control()
+                elif self.average_wheel_speed > 0.0:
+                    self._publisher_cmd.publish(self.full_brake_stop)
                 else:
-                    self.mission_state = MissionState.AS_FINISHED
                     self._publisher_cmd.publish(self.full_brake_stop)
                     self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
+                    self.mission_state = MissionState.AS_FINISHED
 
         # Static Mission B
         elif self.mission_type == Mission.AMI_DDT_INSPECTION_B:
             if self.mission_state == MissionState.AS_READY:
+                self.Kp = 0.6
+                self.Ki = 0.000
+                self.Kd = 0.0005
                 self.get_logger().info('Starting inspection mission B...')
                 self.initial_distance = self.distance
                 self.initial_time = self.get_clock().now()
@@ -198,7 +224,9 @@ class Mission_Control(Node):
                 elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
                 self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 # For 0-10 s drive full steam ahead, for >10s apply brake stop
-                if (self.get_clock().now() - self.initial_time) < Duration(seconds=10):
+                if (self.get_clock().now() - self.initial_time) < Duration(seconds=1):
+                    self.speed_control()
+                elif self.average_wheel_speed < self.target_rpm_b:
                     self.speed_control()
                 else:
                     self.mission_state = MissionState.AS_EMERGENCY_BRAKE
