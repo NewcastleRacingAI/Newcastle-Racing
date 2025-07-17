@@ -3,8 +3,6 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 
-#include <string>
-
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <eufs_msgs/msg/can_state.hpp>
 #include <eufs_msgs/msg/vehicle_commands_stamped.hpp>
@@ -16,7 +14,7 @@
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
-
+#include <string>
 
 #include "fs-ai_api.h"  // NOLINT(build/include_subdir)
 
@@ -43,6 +41,7 @@ class CanInterface : public rclcpp::Node {
   rclcpp::Subscription<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr cmd_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr flag_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr driving_flag_sub_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr rpm_limit_sub_;
 
   // ROS publishers
   rclcpp::Publisher<eufs_msgs::msg::CanState>::SharedPtr state_pub_;
@@ -138,6 +137,12 @@ class CanInterface : public rclcpp::Node {
   void drivingFlagCallback(const std_msgs::msg::Bool::SharedPtr msg);
 
   /**
+   * RPM limit callback to set the maximum RPM of the car
+   * @param msg containing the new RPM limit
+   */
+  void rpmLimitCallback(const std_msgs::msg::Float32::SharedPtr msg);
+
+  /**
    * Creates a eufs_msgs/VehicleCommandsStamped message which contains the same
    * information that is sent to the car (e.g torque and steering commands)
    */
@@ -179,8 +184,8 @@ class CanInterface : public rclcpp::Node {
    * Creates an analogous message to eufs_msgs/CanState but in string format for easy reading.
    * @param state of the car
    */
-  std_msgs::msg::String
-    makeStateString(eufs_msgs::msg::CanState &state);  // NOLINT(runtime/references)
+  std_msgs::msg::String makeStateString(
+      eufs_msgs::msg::CanState &state);  // NOLINT(runtime/references)
 
   /**
    * Warns if a values has exceeded it's limits and returns its trunctuated value

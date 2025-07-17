@@ -30,6 +30,8 @@ CanInterface::CanInterface() : Node("ros_can") {
       "/ros_can/mission_completed", 1, std::bind(&CanInterface::flagCallback, this, _1));
   driving_flag_sub_ = this->create_subscription<std_msgs::msg::Bool>(
       "/state_machine/driving_flag", 1, std::bind(&CanInterface::drivingFlagCallback, this, _1));
+  rpm_limit_sub_ = this->create_subscription<std_msgs::msg::Float32>(
+      "/ros_can/rpm_limit", 1, std::bind(&CanInterface::rpmLimitCallback, this, _1));
 
   // ROS publishers
   state_pub_ = this->create_publisher<eufs_msgs::msg::CanState>("/ros_can/state", 1);
@@ -243,6 +245,10 @@ void CanInterface::drivingFlagCallback(std_msgs::msg::Bool::SharedPtr msg) {
     // Reset last cmd message time back to magic value (0.0) if we stop driving
     last_cmd_message_time_ = 0.0;
   }
+}
+
+void CanInterface::rpmLimitCallback(std_msgs::msg::Float32::SharedPtr msg) {
+  rpm_limit_ = msg->data;
 }
 
 bool CanInterface::requestEBS(std_srvs::srv::Trigger::Request::SharedPtr,
