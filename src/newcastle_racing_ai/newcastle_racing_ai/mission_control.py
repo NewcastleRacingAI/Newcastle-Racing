@@ -132,7 +132,7 @@ class Mission_Control(Node):
         self.previous_error = error
         # Clamp acceleration to reasonable values
         # acceleration = max(min(output, 1.0), -10.0)
-        acceleration = output * 0.01
+        acceleration = output * 0.005
 
         control_cmd = AckermannDriveStamped()
         control_cmd.drive.acceleration = acceleration
@@ -203,7 +203,7 @@ class Mission_Control(Node):
                 elif self.average_wheel_speed > 0.0:
                     self._publisher_cmd.publish(self.full_brake_stop)
                 else:
-                    self._publisher_cmd.publish(self.full_brake_stop)
+                    # self._publisher_cmd.publish(self.full_brake_stop)
                     self.can_reply.data = True
                     self._publisher_can_complete.publish(self.can_reply)
                     self.mission_state = MissionState.AS_FINISHED
@@ -211,8 +211,8 @@ class Mission_Control(Node):
         # Static Mission B
         elif self.mission_type == Mission.AMI_DDT_INSPECTION_B:
             if self.mission_state == MissionState.AS_READY:
-                self.Kp = 0.6
-                self.Ki = 0.000
+                self.Kp = 0.1
+                self.Ki = 0.0001
                 self.Kd = 0.0005
                 self.get_logger().info('Starting inspection mission B...')
                 self.initial_distance = self.distance
@@ -224,7 +224,7 @@ class Mission_Control(Node):
                 elapsed_time = (self.get_clock().now() - self.initial_time).nanoseconds / 1e9
                 self.get_logger().info('Time = %.2f seconds' % elapsed_time)
                 # For 0-10 s drive full steam ahead, for >10s apply brake stop
-                if (self.get_clock().now() - self.initial_time) < Duration(seconds=1):
+                if (self.get_clock().now() - self.initial_time) < Duration(seconds=5):
                     self.speed_control()
                 elif self.average_wheel_speed < self.target_rpm_b:
                     self.speed_control()
