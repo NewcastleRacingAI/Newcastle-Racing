@@ -6,15 +6,29 @@ services:
     volumes: 
       - ./src:/workspace
     environment:
-      - DISPLAY=host.docker.internal:0.0
-      - QT_X11_NO_MITSHM=1
+      - DISPLAY=novnc:0.0
     networks:
       - x11
     ports:
       - "9090:9090"
+    depends_on:
+      - novnc
     stdin_open: true
     tty: true
     privileged: true
+
+  novnc:
+    image: theasp/novnc:latest
+    container_name: vnc_container
+    environment:
+      - DISPLAY_WIDTH=1600
+      - DISPLAY_HEIGHT=968
+      - RUN_XTERM=no
+      - VNC_PASSWORD=password # Add password here
+    ports:
+      - "8080:8080"
+    networks:
+      - x11
 
 networks:
   x11:
