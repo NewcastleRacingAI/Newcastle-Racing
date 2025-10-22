@@ -1,0 +1,54 @@
+Hello FSAI.
+Welcome to the demo image.
+This is an Ubuntu 20.04 image with the RT patch : 5.4.161-rt67-rc1
+
+This image contains the FSAI API Demo and Autoruns it at startup.
+
+Please replace it with your program.
+
+
+==================
+
+1. Press the Super key (usually the key with the Windows logo) on your keyboard and type 'Startup Applications', then hit Enter.
+
+2. In the Startup Applications Preferences window, Click the "Hello World" entry and click Edit.
+
+3. In the Add Startup Program window, input the following:
+
+   - Name: Hello World
+   - Command: /bin/bash -c "gnome-terminal -- /home/fsai/Desktop/hello_world.sh"
+   - Comment: Print Hello, World! in terminal
+
+(Note: the command should be changed to target your application)
+
+4. Click Save.
+
+5. Restart your computer to test.
+
+====================
+
+# Super User priviledges:
+
+Note that some things (like running the setup script which sets up the can device) require super user priviledges.
+
+A convenient way to set this up to run with elevated priviledges when you have no keyboard is to create a script where we run these sudo commands and add it to the sudoers list.
+
+Here is how:
+
+**Modifying the sudoers file:**
+
+To allow your command to run without requiring a password, you can modify the sudoers file:
+
+1. Open a terminal and type `sudo visudo`. This will open the sudoers file in a safe way, preventing multiple simultaneous edits and doing syntax checking on the changes.
+
+2. At the bottom of the file, add a line like this:
+
+    ```
+    yourusername ALL=NOPASSWD: /path/to/your/command
+    ```
+
+    Replace `yourusername` with your actual username, and replace `/path/to/your/command` with the full path to the command or script you want to run. This line allows your user account to run the specified command with sudo, without needing to enter a password.
+
+3. Save and exit the file. If you're using the default editor (nano), you can do this by pressing `CTRL + X`, then `Y`, then `Enter`.
+
+Then, in your startup applications command, use `sudo /path/to/your/command`.

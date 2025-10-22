@@ -342,3 +342,8 @@ ros2 topic echo /odometry_integration/car_state // Display messages from the /od
 colcon build --packages-select mpcc_control // Rebuild the MPCC control package
 
 ros2 topic echo /imu/data // Display messages from the /imu/data topic
+
+
+# Competition Code
+
+The files hello_message.txt came with the provided ssd, details how to launch script that autostarts code on startup. Our startup script from 2025 is hello_world.sh. 
