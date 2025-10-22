@@ -8,8 +8,9 @@ The expected workflow is that all members of the team are able to build the dock
 1. run
 ```
 xhost +local:root
-docker-compose up
+docker-compose up  # or docker compose up depending on version
 ```
+
 when finished it will say "Attaching to nufs", run in separate command line:
 ```
 docker exec -it nufs bash
@@ -17,10 +18,10 @@ docker exec -it nufs bash
 
 2. Inside the container run the MPCC install file:
 ```
-cd src/MPCC/C++
+cd MPCC/C++
 rm -rf External/
 ./install.sh
-cd /workspace/src/ft-fsd-path-planning
+cd /workspace/ft-fsd-path-planning
 pip install --no-cache-dir -r requirements.txt
 ```
 
@@ -29,7 +30,7 @@ pip install --no-cache-dir -r requirements.txt
 cd /workspace
 source /opt/ros/galactic/setup.bash
 pip3 install --no-cache-dir pandas matplotlib scipy
-rosdep install --from-paths src --ignore-src -r -y
+rosdep install --from-paths . --ignore-src -r -y
 ```
 ignore errors about pandas, matplolib and scipy
 ```
