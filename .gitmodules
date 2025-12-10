@@ -16,3 +16,12 @@
 [submodule "src/nrai_pathplanning"]
 	path = src/nrai_pathplanning
 	url = https://github.com/NewcastleRacingAI/nrai_pathplanning.git
+[submodule "src/eufs_sim"]
+	path = src/eufs_sim
+	url = https://gitlab.com/eufs/eufs_sim.git
+[submodule "src/eufs_rviz_plugins"]
+	path = src/eufs_rviz_plugins
+	url = https://gitlab.com/eufs/eufs_rviz_plugins.git
+[submodule "src/ft-fsd-path-planning"]
+	path = src/ft-fsd-path-planning
+	url = https://github.com/papalotis/ft-fsd-path-planning.git
