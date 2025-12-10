@@ -18,7 +18,8 @@
 	url = https://github.com/NewcastleRacingAI/nrai_pathplanning.git
 [submodule "src/eufs_sim"]
 	path = src/eufs_sim
-	url = https://gitlab.com/eufs/eufs_sim.git
+	url = https://github.com/NewcastleRacingAI/eufs_sim.git
+	branch = original
 [submodule "src/eufs_rviz_plugins"]
 	path = src/eufs_rviz_plugins
 	url = https://gitlab.com/eufs/eufs_rviz_plugins.git
