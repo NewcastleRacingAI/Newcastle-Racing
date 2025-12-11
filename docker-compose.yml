@@ -1,0 +1,30 @@
+services:
+  sim:
+    image: ghcr.io/newcastleracingai/newcastle-racing2526:main
+    container_name: nrai
+    environment:
+      - DISPLAY=novnc:0.0
+    networks:
+      - x11
+    ports:
+      - "9090:9090"
+    depends_on:
+      - novnc
+    stdin_open: true
+    tty: true
+
+  novnc:
+    image: theasp/novnc:latest
+    container_name: vnc_container
+    environment:
+      - DISPLAY_WIDTH=1600
+      - DISPLAY_HEIGHT=968
+      - RUN_XTERM=no
+    ports:
+      - "8080:8080"
+    networks:
+      - x11
+
+networks:
+  x11:
+    driver: bridge

@@ -48,6 +48,30 @@ Then, build the ROS packages
 colcon build --symlink-install
 ```
 
+## Running via Docker
+
+The full stack (with some limitations) can be launched as a Docker container.
+To do so, simply use the command
+
+```bash
+docker compose up
+```
+
+The first time, the image will have to be pulled from the registry, which will take some time.
+All subsequent times, after a few seconds, open your browser and navigate to [http://localhost:8080/vnc.html](http://localhost:8080/vnc.html) and click connect.
+You should see a small screen which will allow you to launch the simulator.
+
+### Direct mode (Linux only)
+
+If you are on Linux and using X11, you can avoid having to use your browser, launching all GUI application natively on your desktop instead.
+The commands to run are
+
+```bash
+xhost local:root
+docker compose -f docker-compose.direct.yml up
+```
+
+After a few seconds, the launcher window should appear on your screen.
 
 ## Launching the ZED camera
 

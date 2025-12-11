@@ -1,0 +1,23 @@
+services:
+  sim:
+    image: ghcr.io/newcastleracingai/newcastle-racing2526:main
+    container_name: nrai
+    volumes: 
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - $HOME/.Xauthority:/root/.Xauthority:rw
+    environment:
+      - DISPLAY=$DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - XAUTHORITY=/root/.Xauthority
+    networks:
+      - x11
+    ports:
+      - "9090:9090"
+    stdin_open: true
+    tty: true
+    privileged: true
+
+
+networks:
+  x11:
+    driver: bridge
