@@ -29,14 +29,27 @@ WORKDIR /workspace
 COPY src/eufs_msgs ./src/eufs_msgs
 COPY src/ros_can ./src/ros_can
 COPY src/zed-ros2-wrapper ./src/zed-ros2-wrapper
-# Install dependencies
+COPY src/ft-fsd-path-planning ./src/ft-fsd-path-planning
+COPY src/eufs_rviz_plugins ./src/eufs_rviz_plugins
+# Install dependencies (Round 1)
+RUN rosdep install --from-paths src --ignore-src -r -y
+
+# Copy the eufs_sim package (the one we are actively developing)
+COPY src/eufs_sim ./src/eufs_sim
+# Install dependencies (Round 2)
 RUN rosdep install --from-paths src --ignore-src -r -y
 
 # Copy the rest of the source code
 COPY src ./src
+# Install dependencies (Final Round)
 RUN rosdep install --from-paths src --ignore-src -r -y
 
 # Build the workspace
 RUN . /opt/ros/humble/setup.sh && \
-    colcon build --symlink-install
+    colcon build --packages-skip zed_components zed_ros2 zed_wrapper
 
+COPY launch_simulator.sh /workspace/launch_simulator.sh
+
+RUN chmod +x /workspace/launch_simulator.sh
+
+CMD ["./hello_world.sh"]
