@@ -1,6 +1,6 @@
 services:
   sim:
-    image: ghcr.io/newcastleracingai/newcastle-racing2526:main
+    image: rowan-nrai:latest
     container_name: nrai
     environment:
       - DISPLAY=novnc:0.0

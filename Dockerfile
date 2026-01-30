@@ -49,7 +49,9 @@ RUN . /opt/ros/humble/setup.sh && \
     colcon build --packages-skip zed_components zed_ros2 zed_wrapper
 
 COPY launch_simulator.sh /workspace/launch_simulator.sh
+COPY hello_world.sh /workspace/hello_world.sh
 
 RUN chmod +x /workspace/launch_simulator.sh
+RUN chmod +x /workspace/hello_world.sh
 
 CMD ["./hello_world.sh"]

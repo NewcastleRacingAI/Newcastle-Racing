@@ -1,11 +1,13 @@
 # Newcastle Racing 2025/2026
 
+# WARNING THIS IS A TEMPORARY BRANCH TO ATTEMPT TO GET A SIMPLE UNIVERSAL WORKING CONFIG FOR ROS2 ON DOCKER
+
 To start working on this project, clone the respository and ensure you are on the right branch.
 
 ```bash
-git clone --recurse-submodules https://github.com/NewcastleRacingAI/Newcastle-Racing.git
+git clone --recurse-submodules https://github.com/NewcastleRacingAI/Newcastle-Racing2526.git
 cd Newcastle-Racing
-git checkout 2526
+git checkout rowan
 git submodule update --init --recursive
 ```
 
@@ -26,26 +28,6 @@ Newcastle-Racing
 │   ├── nrai_controller # TODO
 │   └── nrai_mission_control # TODO
 └── hello_world.sh # Entry point script
-```
-
-## Running the full ROS workspace
-
-First, install the ROS dependencies with `rosdep`
-
-```bash
-# Initialize the rosdep package manager (it may need sudo)
-rosdep init || echo "rosdep already initialized"
-# Update rosdep
-rosdep update
-# Install the ros dependencies
-rosdep install --from-paths src --ignore-src -r -y
-```
-
-Then, build the ROS packages
-
-```bash
-/opt/ros/humble/setup.sh
-colcon build --symlink-install
 ```
 
 ## Running via Docker
