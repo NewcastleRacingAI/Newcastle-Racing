@@ -1,33 +1,21 @@
 # Newcastle Racing 2025/2026
 
-# WARNING THIS IS A TEMPORARY BRANCH TO ATTEMPT TO GET A SIMPLE UNIVERSAL WORKING CONFIG FOR ROS2 ON DOCKER
+# WARNING THIS IS A TEMPORARY BRANCH TO ATTEMPT TO GET A SIMPLE UNIVERSAL WORKING CONFIG FOR ROS2 ON DOCKER   
+
+# WARNING 
+YOU MAY FIND THAT YOU NEED TO RUN THIS WITHIN WSL (windows subsystem for linux) AS SOME WINDOWS PROGRAMS CAN MESS WITH LINE ENDINGS
 
 To start working on this project, clone the respository and ensure you are on the right branch.
 
 ```bash
 git clone --recurse-submodules https://github.com/NewcastleRacingAI/Newcastle-Racing2526.git
-cd Newcastle-Racing
+cd Newcastle-Racing2526
 git checkout rowan
-git submodule update --init --recursive
 ```
 
-## Project structure
-
-This is the main workspace repository containing all the sub-packages that make up the Newcastle Racing AI project.
-
+to update your local git repo
 ```bash
-Newcastle-Racing
-├── src # Ros packages
-│   ├── zed-ros2-wrapper # Ready
-│   ├── eufs_msgs # Ready
-│   ├── ros_can # Ready
-│   ├── nrai_odometry # TODO
-│   ├── nrai_perception # TODO
-│   ├── nrai_path_planning # 1  - TODO
-│   ├── ft-fsd-path-planning # 1 
-│   ├── nrai_controller # TODO
-│   └── nrai_mission_control # TODO
-└── hello_world.sh # Entry point script
+git pull && git submodule update --init --recursive
 ```
 
 ## Running via Docker
@@ -59,6 +47,26 @@ docker compose -f docker-compose.direct.yml up
 ```
 
 After a few seconds, the launcher window should appear on your screen.
+
+## Project structure
+
+This is the main workspace repository containing all the sub-packages that make up the Newcastle Racing AI project.
+
+```bash
+Newcastle-Racing
+├── src # Ros packages
+│   ├── zed-ros2-wrapper # Ready
+│   ├── eufs_msgs # Ready
+│   ├── ros_can # Ready
+│   ├── nrai_odometry # TODO
+│   ├── nrai_perception # TODO
+│   ├── nrai_path_planning # 1  - TODO
+│   ├── ft-fsd-path-planning # 1 
+│   ├── nrai_controller # TODO
+│   └── nrai_mission_control # TODO
+└── hello_world.sh # Entry point script
+```
+
 
 ## Launching the ZED camera
 
