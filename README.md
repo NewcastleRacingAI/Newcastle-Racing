@@ -2,9 +2,6 @@
 
 # WARNING THIS IS A TEMPORARY BRANCH TO ATTEMPT TO GET A SIMPLE UNIVERSAL WORKING CONFIG FOR ROS2 ON DOCKER   
 
-# WARNING 
-YOU MAY FIND THAT YOU NEED TO RUN THIS WITHIN WSL (windows subsystem for linux) AS SOME WINDOWS PROGRAMS CAN MESS WITH LINE ENDINGS
-
 To start working on this project, clone the respository and ensure you are on the right branch.
 
 ```bash
@@ -19,6 +16,8 @@ git pull && git submodule update --init --recursive
 ```
 
 ## Running via Docker
+
+**You will first need to install docker on your system**
 
 First run
 ```bash
@@ -47,6 +46,30 @@ docker compose -f docker-compose.direct.yml up
 ```
 
 After a few seconds, the launcher window should appear on your screen.
+
+## Useful commands
+
+get a bash command line on a container
+```bash
+docker exec -it nrai bash 
+```
+(replace nrai for a different contatiner)
+
+rebuild and relaunch
+```bash
+docker build -t rowan-nrai:latest . &&
+docker compose up --detach
+```
+(must be ran in the projects root dir as . is shorthand for that)
+
+stop docker containers
+```bash
+docker compose down
+```
+
+## Troubleshooting
+
+You may find that you need to run docker build within WLS ([windows subsystem for linux](https://learn.microsoft.com/en-us/windows/wsl/install)) as we have found that some windows programs can alter line endings in a way that will break scripts. If you are suffering from this you will likely see \\r in an error message. The linux distribution you install should not matter but ubuntu is probably a safe bet.
 
 ## Project structure
 
