@@ -69,7 +69,7 @@ docker compose down
 
 ## Troubleshooting
 
-You may find that you need to run docker build within WLS ([windows subsystem for linux](https://learn.microsoft.com/en-us/windows/wsl/install)) as we have found that some windows programs can alter line endings in a way that will break scripts. If you are suffering from this you will likely see \\r in an error message. The linux distribution you install should not matter but ubuntu is probably a safe bet.
+You may find that you need to run docker build within WSL ([windows subsystem for linux](https://learn.microsoft.com/en-us/windows/wsl/install)) as we have found that some windows programs can alter line endings in a way that will break scripts. If you are suffering from this you will likely see \\r in an error message. When building from inside WSL you should start with a fresh clone of the repo to ensure that you receive a correct file. The linux distribution you install should not matter but ubuntu is probably a safe bet.
 
 ## Project structure
 
