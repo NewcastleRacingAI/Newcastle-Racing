@@ -51,7 +51,7 @@ After a few seconds, the launcher window should appear on your screen.
 
 get a bash command line on a container
 ```bash
-docker exec -it nrai bash 
+docker exec -it nrai bash
 ```
 (replace nrai for a different contatiner)
 
