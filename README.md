@@ -32,6 +32,11 @@ Newcastle-Racing
 
 ## Running via Docker
 
+First run
+```bash
+docker build -t rowan-nrai:latest .
+```
+
 The full stack (with some limitations) can be launched as a Docker container.
 To do so, simply use the command
 
