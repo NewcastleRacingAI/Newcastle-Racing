@@ -25,7 +25,7 @@ The following section explains the reccomended way to obtain a supported environ
 Windows is a [tier 1 supported](https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027)
 operating system you can skip to [Setting up ros2]   
 
-Alternatively you could install a [supported linux distribution](https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027) in WSL and continue via the [Linux instructions](#Setting up Linux)
+Alternatively you could install a [supported linux distribution](https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027) in WSL and continue via the [Linux-Setup](#Linux-Setup).
 
 ### Linux
 
@@ -161,15 +161,27 @@ su larry
 It should be possible to follow the [Setting up linux](#Setting Up Linux)
 instructions after enabling [Linux binary compatability](https://docs.freebsd.org/en/books/handbook/linuxemu/)
 and installing an [ubuntu base system with debootstrap](https://docs.freebsd.org/en/books/handbook/linuxemu/#linuxemu-debootstrap)
-similar to the [Linux](# Linux) instructions. Howver there may be issues that
+similar to the [Linux](#Linux) instructions. Howver there may be issues that
 arise from the lack of systemd.
 
 ## Setting up ros2
 
 ### Windows-Setup
 
+> For Users wishing to use WSL please install a [supported distrobution](https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027) (Ubuntu jammy) and continue by following the [Linux-Setup](#Linux-Setup).   
+
 **TODO** (gabe)
 
 ### Linux-Setup
 
-**TODO** (rowan)
+The linux install instructions provided by ros2 are generaly sufficently detailed so I wont repeat them here   
+[ubuntu](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)   
+
+[RHEL based distrobutions](https://docs.ros.org/en/humble/Installation/RHEL-Install-RPMs.html)   
+
+However it is worth noting that users using an ubuntu chroot may not be able to use graphical applications from within the chroot, due to not passing in environment variables to the chroot from the host. See [this article](https://wiki.gentoo.org/wiki/Chroot#Wayland) for more information about running graphical applications in a chroot. You are still able to use Graphical applicaions on the host system to edit files within the chroot as you would any other file on your system.   
+
+The ros2 doccumentaion suggests [confuiguring the evironment](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html#environment-setup) using `source /opt/ros/humble/setup.bash` however this will only apply to the current shell i.e. if you close the current shell or spawn a new one this will no longer apply. To make this command apply to all future shells run the following command
+```bash
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+```
