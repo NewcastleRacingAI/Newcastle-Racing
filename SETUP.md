@@ -1,14 +1,14 @@
 # Setting up a development enviroment
 ## Sections
-1. [Introduction](# Introduction)
-2. [Obtaining a supported environment](# Obtaining an ubuntu system)
-    1. [Windows](# Windows)
-    2. [Linux](# Linux)
-    3. [MacOS](# MacOS)
-    4. [FreeBSD](# FreeBSD)
-3. [Setting up ros2](# Setting up ros2 on ubuntu)
-    1. [Setting up Windows](# Setting up Windows)
-    2. [Setting up Linux](# Setting up Linux)
+1. [Introduction](#Introduction)
+2. [Obtaining a supported environment](#Obtaining)
+    1. [Windows](#Windows)
+    2. [Linux](#Linux)
+    3. [MacOS](#MacOS)
+    4. [FreeBSD](#FreeBSD)
+3. [Setting up ros2](#Setting)
+    1. [Windows-Setup](#Windows-Setup)
+    2. [Linux-Setup](#Linux-Setup)
 
 ## Introduction
 
@@ -25,7 +25,7 @@ The following section explains the reccomended way to obtain a supported environ
 Windows is a [tier 1 supported](https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027)
 operating system you can skip to [Setting up ros2]   
 
-Alternatively you could install a [supported linux distribution](# https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027) in WSL and continue via the [Linux instructions](# Setting up Linux)
+Alternatively you could install a [supported linux distribution](https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027) in WSL and continue via the [Linux instructions](#Setting up Linux)
 
 ### Linux
 
@@ -158,7 +158,7 @@ su larry
 
 **disclaimer** - this is untested   
 
-It should be possible to follow the [Setting up linux](# Setting Up Linux)
+It should be possible to follow the [Setting up linux](#Setting Up Linux)
 instructions after enabling [Linux binary compatability](https://docs.freebsd.org/en/books/handbook/linuxemu/)
 and installing an [ubuntu base system with debootstrap](https://docs.freebsd.org/en/books/handbook/linuxemu/#linuxemu-debootstrap)
 similar to the [Linux](# Linux) instructions. Howver there may be issues that
@@ -166,10 +166,10 @@ arise from the lack of systemd.
 
 ## Setting up ros2
 
-### Setting up Windows
+### Windows-Setup
 
 **TODO** (gabe)
 
-### Setting up Linux
+### Linux-Setup
 
 **TODO** (rowan)
