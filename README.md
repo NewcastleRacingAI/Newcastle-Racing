@@ -15,6 +15,9 @@ to update your local git repo
 git pull && git submodule update --init --recursive
 ```
 
+## Setting up a development enviroment
+see SETUP.md for information about setting up a development enviroment
+
 ## Running via Docker
 
 **You will first need to install docker on your system**
