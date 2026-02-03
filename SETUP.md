@@ -116,10 +116,7 @@ will install `nano` and `sudo`
 we can now add a user to the chroot environment
 > If you choose to rename you user replace **larry** with the desired name of your user anywhere you see **larry** in this tutorial you should replace it with your user name before executing the command
 ```bash
-groupadd wheel
-```
-```bash
-useradd -m -G users,wheel -s /usr/bin/bash larry
+useradd -m -G users,sudo -s /usr/bin/bash larry
 ```
 
 set the user password
