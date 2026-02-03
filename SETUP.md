@@ -23,7 +23,7 @@ The following section explains the reccomended way to obtain a supported environ
 ### Windows
 
 Windows is a [tier 1 supported](https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027)
-operating system you can skip to [Setting up ros2]   
+operating system you can skip to [Setting up ros2](#Setting)   
 
 Alternatively you could install a [supported linux distribution](https://reps.openrobotics.org/rep-2000/#humble-hawksbill-may-2022---may-2027) in WSL and continue via the [Linux-Setup](#Linux-Setup).
 
@@ -158,7 +158,7 @@ su larry
 
 **disclaimer** - this is untested   
 
-It should be possible to follow the [Setting up linux](#Setting Up Linux)
+It should be possible to follow the [Setting up linux](#Linux-Setup)
 instructions after enabling [Linux binary compatability](https://docs.freebsd.org/en/books/handbook/linuxemu/)
 and installing an [ubuntu base system with debootstrap](https://docs.freebsd.org/en/books/handbook/linuxemu/#linuxemu-debootstrap)
 similar to the [Linux](#Linux) instructions. Howver there may be issues that
