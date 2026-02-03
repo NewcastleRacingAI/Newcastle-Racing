@@ -102,6 +102,11 @@ set the root password
 passwd
 ```
 
+choose a hostname (replace echo string)
+```bash
+echo "nrai-$RANDOM" > /etc/hostname
+```
+
 Initialise our local package database
 ```bash
 apt update
