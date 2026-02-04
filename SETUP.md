@@ -102,9 +102,9 @@ set the root password
 passwd
 ```
 
-choose a hostname (replace echo string)
+Add hostname to hosts file
 ```bash
-echo "nrai-$RANDOM" > /etc/hostname
+echo "127.0.1.1    $(hostnamectl hostname)" >> /etc/hosts
 ```
 
 Initialise our local package database
