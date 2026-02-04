@@ -2,10 +2,6 @@
 
 # WARNING THIS IS A TEMPORARY BRANCH TO ATTEMPT TO GET A SIMPLE UNIVERSAL WORKING CONFIG FOR ROS2 ON DOCKER   
 
-## Setting up a development enviroment
-see SETUP.md for information about setting up a development enviroment
-
-## Cloning
 To start working on this project, clone the respository and ensure you are on the right branch.
 
 ```bash
@@ -19,12 +15,18 @@ to update your local git repo
 git pull && git submodule update --init --recursive
 ```
 
+## Setting up a development enviroment
+
+We are currently suggesting configureing a docker volume mount to share a portion of your host filesystem with the nrai docker container, you can then build, run and test your program within that container.   
+
+To configure your development environment navigate to the docker-compose.yml file and uncomment the lines for `volume` and its corresponding pathreplacing `your-project` with the name you want for the directory that your code resides in AND replacing `/host/system/path` with the path to the directory your code resides in on your host system. **YOU MUST RETAIN THE COLON BETWEEN THE PATHS**
+
+
 ## Running via Docker
 
-**You will first need to install docker on your system** .Then:
+**You will first need to install docker on your system**
 
-Build our nrai docker image.
-> The first time an image is built will take some time to download all the required files, all subsiquent builds will be very fast however due to caching
+First run
 ```bash
 docker build -t rowan-nrai:latest .
 ```
@@ -36,8 +38,21 @@ To do so, simply use the command
 docker compose up
 ```
 
-After a few seconds, open your browser and navigate to [http://localhost:8080/vnc.html](http://localhost:8080/vnc.html) and click connect.
+The first time, the image will have to be pulled from the registry, which will take some time.
+All subsequent times, after a few seconds, open your browser and navigate to [http://localhost:8080/vnc.html](http://localhost:8080/vnc.html) and click connect.
 You should see a small screen which will allow you to launch the simulator.
+
+### Direct mode (Linux only)
+
+If you are on Linux and using X11, you can avoid having to use your browser, launching all GUI application natively on your desktop instead.
+The commands to run are
+
+```bash
+xhost local:root
+docker compose -f docker-compose.direct.yml up
+```
+
+After a few seconds, the launcher window should appear on your screen.
 
 ## Useful commands
 
@@ -62,20 +77,6 @@ docker compose down
 ## Troubleshooting
 
 You may find that you need to run docker build within WSL ([windows subsystem for linux](https://learn.microsoft.com/en-us/windows/wsl/install)) as we have found that some windows programs can alter line endings in a way that will break scripts. If you are suffering from this you will likely see \\r in an error message. When building from inside WSL you should start with a fresh clone of the repo to ensure that you receive a correct file. The linux distribution you install should not matter but ubuntu is probably a safe bet.
-
-## Advanced
-
-### Direct mode (Linux only)
-
-If you are on Linux and using X11, you can avoid having to use your browser, launching all GUI application natively on your desktop instead.
-The commands to run are
-
-```bash
-xhost local:root
-docker compose -f docker-compose.direct.yml up
-```
-
-After a few seconds, the launcher window should appear on your screen.
 
 ## Project structure
 

@@ -12,6 +12,9 @@ services:
       - novnc
     stdin_open: true
     tty: true
+# Uncomment the following lines and change to suit your system
+#    volumes:
+#      - /host/system/path:/workspace/src/your-project
 
   novnc:
     image: theasp/novnc:latest
