@@ -35,6 +35,8 @@ Users who do not use a tier 1 supported distribution **OR** who do not wish to
 pollute their install with ros2 development, may continue following this section
 to set up an ubuntu chroot environment which they can develop ros2 nodes inside.
 
+**WARNING - THERE ARE CURRENTLY UNSOLVED ISSUES WITH USING A CHROOT UNTILL I SOLVE THEM I RECCOMEND INSTALLING UBUNTU 22.04 (JAMMY) THROUGH A LXC CONTAINER OR FAILING THAT A VM**
+
 #### What is a chroot?
 The purpose of a chroot is to run programs under a seperate root directory to the host system while still sharing the underlying kernel. In our case this has the advantage of us to be able to simulate an ubuntu system with essentialy none of the overhead that comes with solution like virtual machines. Also unlike a container or virtual machine a chroots filesystem is fully transparent to the host system. While a chroot does seperate the environments filesystem from the host, it does not offer the same strong security benifits of virtual machines, for example a malicious program with root access within a chroot would be able to take controll of the host system.
 
