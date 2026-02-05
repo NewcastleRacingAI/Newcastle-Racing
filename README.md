@@ -26,9 +26,14 @@ To configure your development environment navigate to the docker-compose.yml fil
 
 **You will first need to install docker on your system**
 
-First run
+To build the container yourself run
 ```bash
-docker build -t rowan-nrai:latest .
+docker build -t nrai:latest .
+```
+**OR** to pull a premade image from github run
+> You will need to create a key do do this first **TODO** (link to key creation)
+```bash
+<TODO>
 ```
 
 The full stack (with some limitations) can be launched as a Docker container.
@@ -52,7 +57,7 @@ docker exec -it nrai bash
 
 rebuild and relaunch
 ```bash
-docker build -t rowan-nrai:latest . &&
+docker build -t nrai:latest . &&
 docker compose up --detach
 ```
 (must be ran in the projects root dir as . is shorthand for that)

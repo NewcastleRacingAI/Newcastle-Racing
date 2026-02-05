@@ -49,11 +49,9 @@ RUN . /opt/ros/humble/setup.sh && \
     colcon build --packages-skip zed_components zed_ros2 zed_wrapper
 
 COPY launch_simulator.sh /workspace/launch_simulator.sh
-COPY hello_world.sh /workspace/hello_world.sh
 
 RUN chmod +x /workspace/launch_simulator.sh
-RUN chmod +x /workspace/hello_world.sh
 RUN echo "source /workspace/install/setup.bash" >> /root/.bashrc
 RUN echo "export PS1=\"(nrai docker) \$PS1\"" >> /root/.bashrc
 
-CMD ["./hello_world.sh"]
+CMD ["./launch_simulator.sh"]
