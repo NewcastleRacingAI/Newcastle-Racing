@@ -5,7 +5,7 @@ To start working on this project, clone the respository and ensure you are on th
 ```bash
 git clone --recurse-submodules https://github.com/NewcastleRacingAI/Newcastle-Racing2526.git
 cd Newcastle-Racing2526
-git checkout rowan
+git checkout main
 ```
 
 to update your local git repo
