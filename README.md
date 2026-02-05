@@ -1,7 +1,5 @@
 # Newcastle Racing 2025/2026
 
-# WARNING THIS IS A TEMPORARY BRANCH TO ATTEMPT TO GET A SIMPLE UNIVERSAL WORKING CONFIG FOR ROS2 ON DOCKER   
-
 To start working on this project, clone the respository and ensure you are on the right branch.
 
 ```bash
