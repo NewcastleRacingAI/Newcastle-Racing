@@ -19,7 +19,6 @@ We are currently suggesting configureing a docker volume mount to share a portio
 
 To configure your development environment navigate to the docker-compose.yml file and uncomment the lines for `volume` and its corresponding pathreplacing `your-project` with the name you want for the directory that your code resides in AND replacing `/host/system/path` with the path to the directory your code resides in on your host system. **YOU MUST RETAIN THE COLON BETWEEN THE PATHS**
 
-
 ## Running via Docker
 
 **You will first need to install docker on your system**
@@ -83,7 +82,82 @@ docker compose -f docker-compose.direct.yml up
 
 After a few seconds, the launcher window should appear on your screen.
 
+## Setting up 'lite' node testing environment in Windows using WSL (Windows Subsystem for Linux)
+Most of this tutorial is an application of the official "Ubuntu (deb packages)" installation guide for ROS2 Humble in Ubuntu 22.04 found here:
+https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html
 
+I have transcribed the core points of the guide with added instruction on running this ROS2 environment on top WSL with the aim of creating a simple troubleshooting environment for node IO independent of eufs and the docker environment.
+
+### Setting up the WSL environment
+
+This guide requires that you have WSL installed on your system.
+If you do not, please refer to this official microsoft guide: https://learn.microsoft.com/en-us/windows/wsl/install
+
+TODO: Run through WSL installation and transcribe keypoints.
+
+Now that you have WSL on your system, you can access it through PowerShell. Open PowerShell by "PowerShell" into the windows search bar, or executing "powershell" in a terminal window.
+
+Execute the following command
+```powershell
+wsl --install Ubuntu-22.04 
+```
+
+You will be prompted for a UNIX username. I advise entering "ros" for the username, and "ros" for the password, however the choice is arbitrary so long as you remember it.
+
+**Henceforth you should be able to open your ROS test environment using the following powershell command:**
+```powershell
+wsl -d Ubuntu-22.04 
+```
+
+Execute the following commands in sequence. When asked for your password, enter the same password as entered when setting up the environment.
+When prompted to accept / agree, type Y or press enter depending on the prompt.
+
+```bash
+sudo apt update && sudo apt install locales
+sudo locale-gen en_US en_US.UTF-8
+sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+#These four initial commands set system locales to en_US.UTF-8. The default is C.UTF-8. I doubt there is any meaningful difference, but I'm putting it here for the sake of completeness.
+```
+
+```bash
+sudo apt install software-properties-common
+sudo add-apt-repository universe
+```
+
+```bash
+sudo apt update && sudo apt install curl -y
+export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F\" '{print $4}')
+curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
+sudo dpkg -i /tmp/ros2-apt-source.deb
+```
+
+```bash
+sudo apt update
+sudo apt upgrade
+```
+
+```bash
+sudo apt install ros-humble-ros-base
+sudo apt install ros-dev-tools
+```
+
+Once complete, ROS2 should be installed, but not sourced to the bash terminal. To do this, execute the following command, afterwhich ROS2 should be accessible via the 'ros2' command:
+
+```bash
+source /opt/ros/humble/setup.bash
+```
+
+### Ammending bashrc to source ROS2 on creation of a new terminal
+
+To ensure that we can run ros2 on startup every time without executing the above bash command, we must ammend ~/.bashrc to source ROS2 on the creation of a new bash terminal.
+
+```bash
+echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc
+```
+
+After this, we should have a standardised ROS2 environment in windows for testing basic node execution and IO.
 
 ## Project structure
 
