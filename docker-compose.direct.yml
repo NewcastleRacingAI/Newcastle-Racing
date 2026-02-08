@@ -1,6 +1,6 @@
 services:
   sim:
-    image: nrai:latest
+    image: ghcr.io/newcastleracingai/newcastle-racing2526:main
     container_name: nrai
     volumes: 
       - /tmp/.X11-unix:/tmp/.X11-unix

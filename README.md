@@ -23,14 +23,18 @@ To configure your development environment navigate to the docker-compose.yml fil
 
 **You will first need to install docker on your system**
 
-To build the container yourself run
+By default, the docker compose will pull the latest image from the GitHub repository if one is not found locally, avoiding the build step entirely.
+You can pull the image manually, to ensure you have the latest version, with the command
+
 ```bash
-docker build -t nrai:latest .
+docker pull ghcr.io/newcastleracingai/newcastle-racing2526:main
 ```
-**OR** to pull a premade image from github run
-> You will need to create a key do do this first **TODO** (link to key creation)
+
+If you want to test some changes locally, you will need to build the image on your machine.
+To build the image yourself run
+
 ```bash
-<TODO>
+docker build -t ghcr.io/newcastleracingai/newcastle-racing2526:main .
 ```
 
 The full stack (with some limitations) can be launched as a Docker container.
@@ -54,7 +58,7 @@ docker exec -it nrai bash
 
 rebuild and relaunch
 ```bash
-docker build -t nrai:latest . &&
+docker build -t ghcr.io/newcastleracingai/newcastle-racing2526:main . &&
 docker compose up --detach
 ```
 (must be ran in the projects root dir as . is shorthand for that)
