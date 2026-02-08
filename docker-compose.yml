@@ -13,8 +13,8 @@ services:
     stdin_open: true
     tty: true
 # Uncomment the following lines and change to suit your system
-    volumes:
-      - /home/rowan/uni/racingAI/kalman-filter:/workspace/src/kalman-filter
+#    volumes:
+#      - /host/system/path:/workspace/src/your-project
 
   novnc:
     image: theasp/novnc:latest
