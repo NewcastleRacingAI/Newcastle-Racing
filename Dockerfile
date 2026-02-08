@@ -45,7 +45,7 @@ RUN rosdep install --from-paths src --ignore-src -r -y
 
 # Build the workspace
 RUN . /opt/ros/humble/setup.sh && \
-    colcon build --packages-skip zed_components zed_ros2 zed_wrapper
+    colcon build --packages-skip zed_components zed_ros2 zed_wrapper zed_debug
 
 COPY launch_simulator.sh /workspace/launch_simulator.sh
 
