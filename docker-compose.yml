@@ -1,6 +1,6 @@
 services:
   sim:
-    image: ghcr.io/newcastleracingai/newcastle-racing2526:main
+    image: nrai:latest
     container_name: nrai
     environment:
       - DISPLAY=novnc:0.0
@@ -12,6 +12,9 @@ services:
       - novnc
     stdin_open: true
     tty: true
+# Uncomment the following lines and change to suit your system
+#    volumes:
+#      - /host/system/path:/workspace/src/your-project
 
   novnc:
     image: theasp/novnc:latest

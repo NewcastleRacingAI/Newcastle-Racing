@@ -8,7 +8,8 @@ sleep 5
 echo "Starting ROS2 components..."
 # Source the ROS2 and workspace setup files
 source /opt/ros/humble/setup.bash
-source install/setup.bash
+source /workspace/install/setup.bash
 
 # Launch the eufs launcher (starts the simulator)
 ros2 launch eufs_launcher eufs_launcher.launch.py
+sleep infinity #persist container after ros2 exits
