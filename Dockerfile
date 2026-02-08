@@ -17,7 +17,6 @@ RUN apt update && apt install -y \
     vim \
     wget
 
-
 # Initialize rosdep
 RUN rosdep update
 RUN rosdep init || echo "rosdep already initialized"
@@ -50,8 +49,24 @@ RUN . /opt/ros/humble/setup.sh && \
 
 COPY launch_simulator.sh /workspace/launch_simulator.sh
 
+# Add user called user for people developing inside the container, in the case
+# that a user only has one user account on their system they will both have UID 1000
+# and the host machine will see files created in the container as files created by 
+# the Host systems user. 
+RUN useradd -m -G users,sudo -s /usr/bin/bash user
+# Remove passwd for users
+RUN passwd -d root
+RUN passwd -d user
+# If your host machine UID is not 1000 change the container 
+# user's UID with the following command
+# RUN usermod -u 1001
+
 RUN chmod +x /workspace/launch_simulator.sh
-RUN echo "source /workspace/install/setup.bash" >> /root/.bashrc
-RUN echo "export PS1=\"(nrai docker) \$PS1\"" >> /root/.bashrc
+RUN echo "source /workspace/install/setup.bash\nexport PS1=\"(nrai docker) \$PS1\"" >> /root/.bashrc
+RUN echo "source /workspace/install/setup.bash\nexport PS1=\"(nrai docker) \$PS1\"" >> /home/user/.bashrc
+
+# Run personal configureaiton steps
+COPY ./personal_config.sh /root/personal_config.sh
+RUN /root/personal_config.sh
 
 CMD ["./launch_simulator.sh"]
