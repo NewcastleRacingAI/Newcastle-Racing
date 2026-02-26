@@ -138,3 +138,28 @@
     2026-02-13 13:32:19,285 [33] INFO  Vss.Inf.Actors.Private.Communication.Remote [(null)] - Shutting down Remote...
     2026-02-13 13:32:19,288 [42] INFO  Vss.Inf.Actors.Private.Communication.Remote [(null)] - Remote shut down.
     ```
+
+## Starting CarMaker via AVX
+
+- Move to the [/home/newcastleracing/CM_Projects/AVX_SENSORS/2025R2/CM13/UI](/home/newcastleracing/CM_Projects/AVX_SENSORS/2025R2/CM13/UI) and launch the `StartAVXConnectorGUI_13.0.sh` script.
+You may need to change the content of the script to make sure it points to the correct path to the CarMaker executable.
+
+```sh
+# E.g.,
+/opt/ipg/carmaker/linux64/bin/CM_Office -ext GUI/AVXConnector_GUI_11.tcl
+```
+
+## Folders
+
+- Installation folder [/ansys_inc](/ansys_inc)
+- Car Maker Projects folder [/home/newcastleracing/CM_Projects/AVX_SENSORS/2025R2/CM13](/home/newcastleracing/CM_Projects/AVX_SENSORS/2025R2/CM13)
+- Library [/opt/Ansys/AVX_Library_v252/](/opt/Ansys/AVX_Library_v252/)
+
+## Configuration paths
+
+- AVX executable = `/usr/ansys_inc/v252/Autonomy/AVxcelerateSensors/VSS/avxcelerate.sensorssimulator`
+- AVX executable args = `--port 54321 -fbc -lsc -d 54545 -h 127.0.0.1 -t insecure -o  /home/newcastleracing/Documents/AVX_Out`
+- Deploy paramters = `/opt/CM_Projects/AVX_SENSORS/2025R2/CM13/Data/Config/deploy-parameters.json`
+- Simulation parameters = `/opt/Ansys/AVX_Library_v252/FS-UK/resources/ZedCamera_Lidar_SimulationParameters_DisplayOnly.json`
+- Cosim map = `/opt/Ansys/AVX_Library_v252/FS-UK/02_Assets Mapping/CarMakerAssetsMapping_NaturalSky.json`
+- Sensor config = `/opt/Ansys/AVX_Library_v252/FS-UK/Configurations/FS_AI_1PBCam_Zed_0.92MP_original_VLP32_10Hz_Lidar.sencfgx`
