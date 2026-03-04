@@ -26,3 +26,6 @@
 [submodule "src/ft-fsd-path-planning"]
 	path = src/ft-fsd-path-planning
 	url = https://github.com/papalotis/ft-fsd-path-planning.git
+[submodule "src/nrai_simulator"]
+	path = src/nrai_simulator
+	url = https://github.com/NewcastleRacingAI/nrai_simulator.git

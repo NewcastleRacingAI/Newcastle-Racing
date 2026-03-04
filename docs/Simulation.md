@@ -146,7 +146,8 @@ You may need to change the content of the script to make sure it points to the c
 
 ```sh
 # E.g.,
-/opt/ipg/carmaker/linux64/bin/CM_Office -ext GUI/AVXConnector_GUI_11.tcl
+cd /home/newcastleracing/CM_Projects/AVX_SENSORS/2025R2/CM13/UI
+./StartAVXConnectorGUI_13.0.sh
 ```
 
 ## Folders
