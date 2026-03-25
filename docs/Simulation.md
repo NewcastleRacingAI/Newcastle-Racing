@@ -164,3 +164,37 @@ cd /home/newcastleracing/CM_Projects/AVX_SENSORS/2025R2/CM13/UI
 - Simulation parameters = `/opt/Ansys/AVX_Library_v252/FS-UK/resources/ZedCamera_Lidar_SimulationParameters_DisplayOnly.json`
 - Cosim map = `/opt/Ansys/AVX_Library_v252/FS-UK/02_Assets Mapping/CarMakerAssetsMapping_NaturalSky.json`
 - Sensor config = `/opt/Ansys/AVX_Library_v252/FS-UK/Configurations/FS_AI_1PBCam_Zed_0.92MP_original_VLP32_10Hz_Lidar.sencfgx`
+
+## CarMaker
+
+### Installation
+
+Register on the [IPG Formula Student](https://www.ipg-automotive.com/support/licenses/formula-carmaker) website.
+You may need to prove you are part of a team enrolled in the Formula Student competition.
+After a while, you should receive confirmation you have been accepted and, with that, access to the [cutomer area](https://www.ipg-automotive.com/support/customer-area) of the website.
+From there, you can download CarMaker for your platform of choice and **"LTS for FS-AI 2026"**, a zip file containing the project to load into CarMaker.
+
+Extract the folder and check that the cone `.node` files are present.
+They should be in `MovieNX/data/TrafficCones`.
+If they are not there, try copying them over from an older version of **"LTS for FS-AI 2026"** (if you have access to any).
+Otherwise, the cones will not appear.
+
+Then, the setup begins.
+- Source ros `source /opt/ros/humble/setup.bash`
+- Make all bash scripts that you will need executable: `chmod +x build.sh ros/ros2_ws/build.sh CMStart.sh`
+- Update the symlink
+    ```bash
+    cd lib
+    sudo ln -sfn libcmcppifloader-linux64.so.1.0.0 libcmcppifloader-linux64.so
+    ```
+- Build CarMaker `./build.sh`
+- Run CarMaker `./CMStart.sh`
+- From the GUI:
+  - `Application > IO configuration` add a virtual bus interface, select vCAN for the `vBus 0`, and enable all things that can be enabled.
+    Save and make sure this configuration is used by the simulator.
+  - `Application > Configuration / Status` add `-io can` to the `Command line options`
+  - `Extra > CMRosIF > Launch & start Application` to launch the ROS bridge
+  - `File > Movie NX` to launch the visualization tool
+  - `File > Open` to select your test run
+
+Finally, you can start your simulation.
