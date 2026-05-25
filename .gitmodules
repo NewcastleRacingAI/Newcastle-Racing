@@ -29,3 +29,6 @@
 [submodule "src/nrai_simulator"]
 	path = src/nrai_simulator
 	url = https://github.com/NewcastleRacingAI/nrai_simulator.git
+[submodule "src/nrai_controller"]
+	path = src/nrai_controller
+	url = https://github.com/NewcastleRacingAI/shen-controller.git
