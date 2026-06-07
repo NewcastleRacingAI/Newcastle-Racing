@@ -1,0 +1,4 @@
+[submodule "src/nrai_perception"]
+	path = src/nrai_perception
+	url = https://github.com/NewcastleRacingAI/nrai_perception/
+	branch = nrai_perception_fullstack
