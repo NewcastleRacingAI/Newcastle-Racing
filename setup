@@ -1,0 +1,4 @@
+cd ./src
+./nrai_perception/setup
+./nrai_pathplanning/setup
+./nrai_controller/setup
