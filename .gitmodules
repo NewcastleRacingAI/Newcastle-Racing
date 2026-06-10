@@ -1,3 +1,7 @@
+[submodule "src/nrai_pathplanning"]
+	path = src/nrai_pathplanning
+	url = https://github.com/NewcastleRacingAI/nrai_pathplanning
+	branch = fullstack
 [submodule "src/nrai_perception"]
 	path = src/nrai_perception
 	url = https://github.com/NewcastleRacingAI/nrai_perception
@@ -5,8 +9,4 @@
 [submodule "src/nrai_controller"]
 	path = src/nrai_controller
 	url = https://github.com/NewcastleRacingAI/shen-controller
-	branch = fullstack
-[submodule "src/nrai_pathplanning"]
-	path = src/nrai_pathplanning
-	url = https://github.com/NewcastleRacingAI/nrai_pathplanning
 	branch = fullstack
