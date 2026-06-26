@@ -6,6 +6,12 @@ resolution-markers = [
     "sys_platform != 'win32'",
 ]
 
+[manifest]
+members = [
+    "newcastle-racing",
+    "nrai-perception",
+]
+
 [[package]]
 name = "certifi"
 version = "2026.6.17"
@@ -563,18 +569,18 @@ wheels = [
 [[package]]
 name = "newcastle-racing"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "nrai-perception" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "nrai-perception", directory = "src/nrai_perception" }]
+requires-dist = [{ name = "nrai-perception", editable = "src/nrai_perception" }]
 
 [[package]]
 name = "nrai-perception"
 version = "0.1.0"
-source = { directory = "src/nrai_perception" }
+source = { editable = "src/nrai_perception" }
 dependencies = [
     { name = "cython" },
     { name = "numpy" },

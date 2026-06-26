@@ -1,7 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "newcastle-racing"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "nrai-perception @ file:///${PROJECT_ROOT}/src/nrai_perception",
+    "nrai-perception",
 ]
+
+[tool.uv.workspace]
+members = [
+    "src/nrai_perception",
+]
+
+[tool.uv.sources]
+nrai-perception = { workspace = true, editable = true }
