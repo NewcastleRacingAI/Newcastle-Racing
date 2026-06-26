@@ -324,13 +324,21 @@ int RSDS_Client::connect_destination(void)
         return -2;
     }
 
-    if (::connect(dest_sock_, (struct sockaddr *)&DestAddr, sizeof(DestAddr)) < 0)
+    int tries = rsdscfg_.ConnectionTries;
+    while (::connect(dest_sock_, (struct sockaddr *)&DestAddr, sizeof(DestAddr)) < 0 && tries > 0)
     {
         printf("Destination: can't connect '%s:%d' -> %s\n", dest_host_.c_str(), dest_port_, strerror(errno));
-        dest_sock_ = -1;
-        return -2;
+        if (tries > 1)
+        {
+            printf("\tretrying in 1 second... (%d)\n", --tries);
+            sleep(2);
+        }
+        else
+        {
+            dest_sock_ = -1;
+            return -4;
+        }
     }
-    ioctlsocket(dest_sock_, FIONBIO, 0);
     
     printf("Destination: Connected to %s:%d\n", dest_host_.c_str(), dest_port_);
     return 0;
@@ -401,7 +409,6 @@ void RSDS_Client::run()
             break;
         }
 
-        printf("Getting data\n");
         get_data();
     }
 
@@ -499,8 +506,6 @@ int RSDS_Client::get_data()
     }
     else if (sscanf(rsdscfg_.sbuf, "*RSDSEmbeddedData %d %f %d %s", &Channel, &SimTime, &dataLen, AniMode) == 4)
     {
-        printf("Getting depth\n");
-
         if (rsdscfg_.Verbose == 1)
             printf("Embedded Data: %d %f %d %s\n", &Channel, SimTime, dataLen, AniMode);
 
