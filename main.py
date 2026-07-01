@@ -1,6 +1,6 @@
 from nrai_perception.node import handle_simulator
-from nrai_pathplanning.node import handle_pathplanning
-from nrai_control.node import handle_control
+from nrai_pathplanning.node import main as handle_pathplanning
+from nrai_control.node import main as handle_control
 from src.nrai_carmaker.nrai_carmaker_server import main as main_simulator
 from multiprocessing import Process, Queue
 import argparse
