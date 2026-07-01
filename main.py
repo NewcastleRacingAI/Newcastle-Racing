@@ -1,12 +1,13 @@
-from nrai_perception.node import handle_simulator
+from nrai_perception.node import main as handle_perception
 from nrai_pathplanning.node import main as handle_pathplanning
-from nrai_control.node import main as handle_control
-from src.nrai_carmaker.nrai_carmaker_server import main as main_simulator
+from nrai_controller.node import main as handle_controller
+from src.nrai_carmaker.nrai_carmaker_server import main as handle_simulator
 from multiprocessing import Process, Queue
 import argparse
 import logging
 import subprocess
 import os
+from typing import Literal
 
 class Args(argparse.Namespace):
     logger_format: str = "%(asctime)s {%(processName)s} [%(levelname)s] %(filename)s:%(lineno)d => %(message)s"
@@ -22,7 +23,7 @@ class Args(argparse.Namespace):
     simulator_exe: str = "./src/nrai_carmaker/sensor_client.exe"
     carmaker_host: str = "127.0.0.1"
     carmaker_ports: list[str] = [2210, 2211]
-
+    mode: Literal["all", "nrai-only", "simulator-only"] = "all"
 
 
 def parse(args: list[str] | None = None):
@@ -39,6 +40,7 @@ def parse(args: list[str] | None = None):
     parser.add_argument("-se", "--simulator-exe", type=str, default=default_args.simulator_exe, help="Path to the exe file that captures simulated data from CarMaker and sends it to the simulator node")
     parser.add_argument("-ch", "--carmaker-host", type=str, default=default_args.carmaker_host, help="Ip of the CarMaker camera RSI")
     parser.add_argument("-cp", "--carmaker-ports", type=str, nargs="*", default=default_args.carmaker_ports, help="Ports corresponding to all the CarMaker sensors")
+    parser.add_argument("-m", "--mode", type=str, choices=["all", "nrai-only", "simulator-only"], default=default_args.mode, help="Which processes to launch. nrai-only will only launch the nrai python processes, simulator-only will only launch the CarMaker => NRAI executables")
     return parser.parse_args(args, namespace=default_args)
 
 def main(sys_args: list[str] | None = None):
@@ -49,24 +51,25 @@ def main(sys_args: list[str] | None = None):
     args.topics = {args.camera_topic: Queue(), args.planning_topic: Queue(), args.control_topic: Queue()}
 
     # NRAI nodes
-    control = Process(name="nrai_control", target=handle_control, args=[args], daemon=True)
-    pathplanning = Process(name="nrai_pathplanning", target=handle_pathplanning, args=[args], daemon=True)
-    perception = Process(name="nrai_perception", target=handle_simulator, args=[args], daemon=True)
-    simulator = Process(name="nrai_simulator", target=main_simulator, args=[args], daemon=True)
+    nodes = (
+        Process(name="nrai_controller", target=handle_controller, args=[args], daemon=True),
+        Process(name="nrai_pathplanning", target=handle_pathplanning, args=[args], daemon=True),
+        Process(name="nrai_perception", target=handle_perception, args=[args], daemon=True),
+        Process(name="nrai_simulator", target=handle_simulator, args=[args], daemon=True),
+    ) if args.mode != "simulator-only" else tuple()
 
-    control.start()
-    pathplanning.start()
-    perception.start()
-    simulator.start()
+    for node in nodes:
+        node.start()
 
     # CarMaker simulated sensors
     carmaker_exes = []
-    if args.simulator_exe and args.carmaker_host:
+    if args.mode != "nrai-only" and not args.zed:
         assert os.path.exists(args.simulator_exe)
         carmaker_exes = [subprocess.Popen([args.simulator_exe, '-p', str(port), '-d', args.simulator_host, "-x", str(args.simulator_port)]) for port in args.carmaker_ports]
 
     try:
-        perception.join(), simulator.join(), control.join(), pathplanning.join()
+        for node in nodes:
+            node.join()
     except KeyboardInterrupt:
         logging.getLogger().info("All nodes are closed")
 

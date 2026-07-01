@@ -8,12 +8,18 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "nrai-perception",
+    "nrai-pathplanning",
+    "nrai-controller",
 ]
 
 [tool.uv.workspace]
 members = [
     "src/nrai_perception",
+    "src/nrai_pathplanning",
+    "src/nrai_controller",
 ]
 
 [tool.uv.sources]
 nrai-perception = { workspace = true, editable = true }
+nrai-pathplanning = { workspace = true, editable = true }
+nrai-controller = { workspace = true, editable = true }
