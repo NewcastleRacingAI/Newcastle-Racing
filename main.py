@@ -1,4 +1,6 @@
 from nrai_perception.node import handle_simulator
+from nrai_pathplanning.node import handle_pathplanning
+from nrai_control.node import handle_control
 from src.nrai_carmaker.nrai_carmaker_server import main as main_simulator
 from multiprocessing import Process, Queue
 import argparse
@@ -12,6 +14,7 @@ class Args(argparse.Namespace):
     zed: bool = False
     camera_topic: str = "/nrai/camera"
     planning_topic: str = "/nrai/planning"
+    control_topic: str = "/nrai/control"
     simulator_host: str = "127.0.0.1"
     simulator_bind: str = "0.0.0.0"
     simulator_port: int = 8000
@@ -28,6 +31,7 @@ def parse(args: list[str] | None = None):
     parser.add_argument("-z", "--zed", action="store_true", default=default_args.zed, help="Whether we are using the zed camera or a CarMaker simulation")
     parser.add_argument("-ct", "--camera-topic", type=str, default=default_args.camera_topic, help="Topic simulator => perception. Used for both RGB and Depth camera from CarMaker")
     parser.add_argument("-pt", "--planning-topic", type=str, default=default_args.planning_topic, help="Topic perception => planning")
+    parser.add_argument("-crt", "--control-topic", type=str, default=default_args.control_topic, help="Topic planning => control")
     parser.add_argument("-sh", "--simulator-host", type=str, default=default_args.simulator_host, help="Ip of the machine the simulator node is running on")
     parser.add_argument("-sb", "--simulator-bind", type=str, default=default_args.simulator_bind, help="Ip used to bind the simulator node server")
     parser.add_argument("-sp", "--simulator-port", type=int, default=default_args.simulator_port, help="Port the simulator node is listening on")
@@ -42,12 +46,16 @@ def main(sys_args: list[str] | None = None):
 
     logging.basicConfig(format=args.logger_format, level=args.verbosity)
 
-    args.topics = {args.camera_topic: Queue()}
+    args.topics = {args.camera_topic: Queue(), args.planning_topic: Queue(), args.control_topic: Queue()}
 
     # NRAI nodes
+    control = Process(name="nrai_control", target=handle_control, args=[args], daemon=True)
+    pathplanning = Process(name="nrai_pathplanning", target=handle_pathplanning, args=[args], daemon=True)
     perception = Process(name="nrai_perception", target=handle_simulator, args=[args], daemon=True)
     simulator = Process(name="nrai_simulator", target=main_simulator, args=[args], daemon=True)
 
+    control.start()
+    pathplanning.start()
     perception.start()
     simulator.start()
 
@@ -58,7 +66,7 @@ def main(sys_args: list[str] | None = None):
         carmaker_exes = [subprocess.Popen([args.simulator_exe, '-p', str(port), '-d', args.simulator_host, "-x", str(args.simulator_port)]) for port in args.carmaker_ports]
 
     try:
-        perception.join(), simulator.join()
+        perception.join(), simulator.join(), control.join(), pathplanning.join()
     except KeyboardInterrupt:
         logging.getLogger().info("All nodes are closed")
 
